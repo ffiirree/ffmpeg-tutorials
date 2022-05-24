@@ -15,7 +15,7 @@ endif()
 ########################################################################################################################
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
 
-find_package(FFmpeg COMPONENTS avutil avcodec avformat avdevice avfilter REQUIRED)
+find_package(FFmpeg COMPONENTS avutil avcodec avformat avdevice avfilter swscale REQUIRED)
 
 if(WIN32)
     # Windows API
@@ -30,9 +30,10 @@ add_definitions(-D__STDC_CONSTANT_MACROS)
 
 function(create_exe name source_file)
     add_executable(${name} ${source_file})
-    target_link_libraries(${name} PRIVATE FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter)
+    target_link_libraries(${name} PRIVATE FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter FFmpeg::swscale)
 endfunction(create_exe)
 
 
 create_exe(remuxing 01_remuxing/remuxing.cpp)
 create_exe(trancoding 02_trancoding/transcoding.cpp)
+create_exe(recording 03_recording/recording.cpp)

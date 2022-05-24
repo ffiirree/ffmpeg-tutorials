@@ -5,17 +5,25 @@ extern "C" {
 #include <libavutil/timestamp.h>
 #include <libavdevice/avdevice.h>
 #include <libavutil/opt.h>
+#include <libswscale\swscale.h>
+#include <libavutil\imgutils.h>
+#include <libavutil\time.h>
 }
 
 int main(int argc, char* argv[])
 {
-    if (argc < 3) {
-        printf("transcoding <input> <output>");
+    if (argc < 4) {
+        printf("recording <format(dshow/gdigrab)> <input(video=CAMERA/desktop)> <output>");
+        printf("\trecording dshow video=\"HD WebCam\" camera.mp4");
+        printf("\trecording gdigrab desktop desktop.mp4");
         return -1;
     }
 
-    const char * in_filename = argv[1];
-    const char * out_filename = argv[2];
+    const char * input_format = argv[1];
+    const char * input = argv[2];
+    const char * out_filename = argv[3];
+
+    avdevice_register_all();
 
     AVFormatContext * decoder_fmt_ctx = avformat_alloc_context();
     if (!decoder_fmt_ctx) {
@@ -23,8 +31,8 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    if (avformat_open_input(&decoder_fmt_ctx, in_filename, nullptr, nullptr) < 0) {
-        fprintf(stderr, "avformat_open_input()\n");
+    if (avformat_open_input(&decoder_fmt_ctx, input, av_find_input_format(input_format), nullptr) < 0) {
+        fprintf(stderr, "avformat_open_input(%s)\n", input);
         return -1;
     }
 
@@ -33,11 +41,11 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    av_dump_format(decoder_fmt_ctx, 0, in_filename, 0);
+    av_dump_format(decoder_fmt_ctx, 0, input, 0);
 
     int video_stream_idx = av_find_best_stream(decoder_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     if (video_stream_idx < 0) {
-        fprintf(stderr, "decoder: av_find_best_stream()\n");
+        fprintf(stderr, "decoder: av_find_best_stream(AVMEDIA_TYPE_VIDEO)\n");
         return -1;
     }
 
@@ -51,7 +59,7 @@ int main(int argc, char* argv[])
     // decoder context
     AVCodecContext * decoder_ctx = avcodec_alloc_context3(decoder);
     if(!decoder_ctx) {
-       fprintf(stderr, "decoder: avcodec_alloc_context3()\n");
+        fprintf(stderr, "decoder: avcodec_alloc_context3()\n");
         return -1;
     }
 
@@ -104,8 +112,9 @@ int main(int argc, char* argv[])
     encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
     encoder_ctx->pix_fmt = encoder->pix_fmts[0];
     // time base
-    encoder_ctx->time_base = av_inv_q(av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr));
+    encoder_ctx->time_base = decoder_fmt_ctx->streams[video_stream_idx]->time_base;
     encoder_fmt_ctx->streams[0]->time_base = encoder_ctx->time_base;
+    encoder_ctx->framerate = av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr);
 
     if(avcodec_open2(encoder_ctx, encoder, &encoder_options) < 0) {
         fprintf(stderr,"encoder: avcodec_open2()\n");
@@ -133,15 +142,38 @@ int main(int argc, char* argv[])
 
     AVPacket * in_packet = av_packet_alloc();
     AVPacket * out_packet = av_packet_alloc();
-    AVFrame * in_frame = av_frame_alloc();
-    while(av_read_frame(decoder_fmt_ctx, in_packet) >= 0) {
+    AVFrame * decoded_frame = av_frame_alloc();
+
+    SwsContext * sws_ctx = sws_getContext(
+            decoder_ctx->width,decoder_ctx->height,decoder_ctx->pix_fmt,
+            encoder_ctx->width,encoder_ctx->height,encoder_ctx->pix_fmt,
+            SWS_BICUBIC, nullptr, nullptr, nullptr
+    );
+    if (!sws_ctx) {
+        fprintf(stderr, "sws_getContext()\n");
+        return -1;
+    }
+    AVFrame * scaled_frame = av_frame_alloc();
+    if(av_image_alloc(scaled_frame->data, scaled_frame->linesize,
+                      encoder_ctx->width, encoder_ctx->height,
+                      encoder_ctx->pix_fmt, 8) < 0) {
+        fprintf(stderr, "av_image_alloc()\n");
+        return -1;
+    }
+    int64_t first_pts = AV_NOPTS_VALUE;
+    printf("encoder: framerate: %d/%d, context timebase: %d/%d, stream timebase: %d/%d\n",
+           encoder_ctx->framerate.num, encoder_ctx->framerate.den,
+           encoder_ctx->time_base.num, encoder_ctx->time_base.den,
+           encoder_fmt_ctx->streams[0]->time_base.num, encoder_fmt_ctx->streams[0]->time_base.den);
+
+    while(av_read_frame(decoder_fmt_ctx, in_packet) >= 0 && decoder_ctx->frame_number < 150) {
         if (in_packet->stream_index != video_stream_idx) {
             continue;
         }
 
         int ret = avcodec_send_packet(decoder_ctx, in_packet);
         while(ret >= 0) {
-            ret = avcodec_receive_frame(decoder_ctx, in_frame);
+            ret = avcodec_receive_frame(decoder_ctx, decoded_frame);
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                 break;
             } else if (ret < 0) {
@@ -149,8 +181,19 @@ int main(int argc, char* argv[])
                 return ret;
             }
 
+            sws_scale(sws_ctx,
+                      static_cast<const uint8_t *const *>(decoded_frame->data), decoded_frame->linesize,
+                      0, decoder_ctx->height,
+                      scaled_frame->data, scaled_frame->linesize);
+            scaled_frame->height = decoded_frame->height;
+            scaled_frame->width = decoded_frame->width;
+            scaled_frame->format = encoder_ctx->pix_fmt;
+
+            first_pts = first_pts == AV_NOPTS_VALUE ? av_gettime_relative() : first_pts;
+            scaled_frame->pts = av_rescale_q(av_gettime_relative() - first_pts, { 1, AV_TIME_BASE }, encoder_ctx->time_base);
+
             if (ret >= 0) {
-                ret = avcodec_send_frame(encoder_ctx, in_frame);
+                ret = avcodec_send_frame(encoder_ctx, scaled_frame);
                 while(ret >= 0) {
                     ret = avcodec_receive_packet(encoder_ctx, out_packet);
 
@@ -162,7 +205,10 @@ int main(int argc, char* argv[])
                     }
 
                     out_packet->stream_index = 0;
-                    av_packet_rescale_ts(out_packet, decoder_fmt_ctx->streams[video_stream_idx]->time_base, encoder_fmt_ctx->streams[0]->time_base);
+                    out_packet->duration = decoded_frame->pkt_duration;
+                    av_packet_rescale_ts(out_packet, encoder_ctx->time_base, encoder_fmt_ctx->streams[0]->time_base);
+
+                    printf("pts: %lld, dts: %lld, duration: %lld\n", out_packet->pts, out_packet->dts, out_packet->duration);
 
                     if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
                         fprintf(stderr, "encoder: av_interleaved_write_frame()\n");
@@ -171,7 +217,7 @@ int main(int argc, char* argv[])
                 }
                 av_packet_unref(out_packet);
             }
-            av_frame_unref(in_frame);
+            av_frame_unref(decoded_frame);
         }
         av_packet_unref(in_packet);
     }
@@ -180,7 +226,8 @@ int main(int argc, char* argv[])
 
     av_packet_free(&in_packet);
     av_packet_free(&out_packet);
-    av_frame_free(&in_frame);
+    av_frame_free(&decoded_frame);
+    av_frame_free(&scaled_frame);
 
     av_write_trailer(encoder_fmt_ctx);
     if (encoder_fmt_ctx && !(encoder_fmt_ctx->oformat->flags & AVFMT_NOFILE))
@@ -194,5 +241,5 @@ int main(int argc, char* argv[])
     avcodec_free_context(&decoder_ctx);
     avcodec_free_context(&encoder_ctx);
 
-	return 0;
+    return 0;
 }

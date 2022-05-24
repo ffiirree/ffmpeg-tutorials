@@ -21,6 +21,10 @@ int main(int argc, char* argv[])
     const char * out_filename = argv[2];
 
     AVFormatContext* decoder_fmt_ctx = avformat_alloc_context();
+    if (!decoder_fmt_ctx) {
+        fprintf(stderr, "avformat_alloc_context()\n");
+        return -1;
+    }
 
     if (avformat_open_input(&decoder_fmt_ctx, in_filename, nullptr, nullptr) < 0) {
         fprintf(stderr, "avformat_open_input()\n");
