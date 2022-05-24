@@ -11,7 +11,7 @@ extern "C" {
 int main(int argc, char* argv[])
 {
     if (argc < 3) {
-        printf("filtering <input> <output>");
+        printf("filter <input> <output>");
         return -1;
     }
 
@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "av_frame_alloc(\"filtered_frame\")\n");
         return -1;
     }
-    while(av_read_frame(decoder_fmt_ctx, in_packet)) {
+    while(av_read_frame(decoder_fmt_ctx, in_packet) >= 0) {
         if (in_packet->stream_index != video_stream_idx) {
             continue;
         }
