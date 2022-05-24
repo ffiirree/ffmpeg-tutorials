@@ -18,9 +18,9 @@ sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libavdevice
 - [ ] [remuxing](/01_remuxing/README.md)
 - [ ] [transcoding](/02_trancoding/README.md)
 - [ ] [recording camera / screen](/03_recording/README.md)
-- [ ] [simple filters](/04_simple_filters/README.md)
-- [ ] [complex filters](/05_complex_filter/README.md)
-- [ ] generating high quality GIF
+- [ ] [simple filter](/04_simple_filters/README.md)
+- [ ] [complex filter](/05_complex_filter/README.md)
+- [ ] [generating high quality GIF](/06_gen_gif/README.md)
 - [ ] syncing audio and video
 
 

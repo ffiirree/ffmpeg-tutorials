@@ -64,3 +64,4 @@ enc_temp_folder
 *.ts
 *.mp3
 !hevc.mkv
+*.gif
