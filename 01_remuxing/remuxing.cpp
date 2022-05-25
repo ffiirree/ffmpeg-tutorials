@@ -101,7 +101,6 @@ int main(int argc, char* argv[])
         }
 
         if (av_interleaved_write_frame(encoder_fmt_ctx, packet) != 0) {
-            char buffer[64]{0};
             fprintf(stderr, "encoder: av_interleaved_write_frame()\n");
             return -1;
         }

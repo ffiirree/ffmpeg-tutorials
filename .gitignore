@@ -65,3 +65,4 @@ enc_temp_folder
 *.mp3
 !hevc.mkv
 *.gif
+*.pptx
