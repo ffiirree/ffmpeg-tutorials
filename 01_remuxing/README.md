@@ -74,11 +74,11 @@ avformat_alloc_output_context2(&encoder_fmt_ctx, nullptr, nullptr, out_filename)
 ```c
 AVStream * encode_stream = avformat_new_stream(encoder_fmt_ctx, nullptr);
 
-// 因为重封装不修改流的内容，直接复制流的参数到输出流中
+// 因为重封装不修改流的内容，直接复制输入流的参数到输出流中
 avcodec_parameters_copy(encode_stream->codecpar, decoder_fmt_ctx->streams[i]->codecpar)
 ```
 
-这样，输出的信息就准备完毕，接下来创建输入文件：
+这样，输出的信息就准备完毕，接下来创建输出文件：
 
 ```c
 // 打开输出文件
