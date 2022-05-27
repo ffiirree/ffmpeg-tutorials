@@ -1,16 +1,37 @@
 # FFmpeg Examples
 
+包括 `解/编码`、`(复杂)滤波器`、`录屏/摄像头`、`音视频播放` 的基础示例以及相关教程。
+
+Examples and tutorials for `decoding/encoding`, `(complex)filtering`, `screen/camera recording`, `audio/video playing`, etc.
+
 ## Installation
 
 ### Windows
 
-- [Windows builds](https://www.ffmpeg.org/download.html#build-windows)
+#### FFmpeg
+
+> Version = 4.4.2
+
+- [Windows builds](https://www.ffmpeg.org/download.html#build-windows): 注意下载**库(shared)**版本，添加到**环境变量**中
 - [From source](/compile_on_windows.md)
+
+#### Qt
+
+> Version >= 5.12.12
+
+- [Download](https://download.qt.io/archive/qt/): 注意添加到**环境变量**中
 
 ### Ubuntu
 
 ```bash
 sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libavdevice-dev libswscale-dev libavfilter-dev
+sudo apt install qt5-default libqt5x11extras5-dev qtmultimedia5-dev 
+```
+
+### Usage
+
+```bash
+git clone https://github.com/ffiirree/ffmpeg_examples.git --recursive
 ```
 
 ## Examples
@@ -21,7 +42,9 @@ sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libavdevice
 - [ ] [simple filter](/04_simple_filters/README.md)
 - [ ] [complex filter](/05_complex_filter/README.md)
 - [ ] [generating high quality GIF](/06_gen_gif/README.md)
-- [ ] syncing audio and video
+- [ ] audio player with Qt
+- [ ] video player with Qt
+- [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md)
 
 
 ## References
