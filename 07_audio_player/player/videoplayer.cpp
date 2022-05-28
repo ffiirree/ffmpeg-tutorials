@@ -4,25 +4,10 @@
 VideoPlayer::VideoPlayer(QWidget* parent)
         : QWidget(parent)
 {
-    setAttribute(Qt::WA_TranslucentBackground);
-
-    frame_ = av_frame_alloc();
-
     decoder_ = new MediaDecoder(this);
 
     audio_player_ = new AudioPlayer(this);
     audio_player_->open(48000, 2, 16);
-
-    decoder_->set_video_callback([=](AVFrame * frame) {
-        mtx_.lock();
-        if(frame_) {
-            av_frame_unref(frame_);
-            av_frame_ref(frame_, frame);
-        }
-        mtx_.unlock();
-
-        QWidget::update();
-    });
 
     decoder_->set_period_size(audio_player_->period_size());
     decoder_->set_audio_callback([=](RingBuffer& buffer) -> std::pair<int64_t, bool> {
@@ -39,23 +24,18 @@ VideoPlayer::VideoPlayer(QWidget* parent)
         return std::pair{ audio_player_->buffered_size(), ok };
     });
 
-    resize(640, 480);
+    resize(640, 240);
 }
 
-bool VideoPlayer::play(const std::string& name, const std::string& fmt, const std::string& filter_descr)
+bool VideoPlayer::play(const std::string& name)
 {
-    if (!decoder_->open(name, fmt, filter_descr, AV_PIX_FMT_RGB24, {})) {
+    if (!decoder_->open(name)) {
         return false;
     }
 
-    resize((decoder_->width() > 1440 || decoder_->height() > 810) ?
-           QSize(decoder_->width(), decoder_->height()).scaled(1440, 810, Qt::KeepAspectRatio) :
-           QSize( decoder_->width(), decoder_->height())
-    );
-
     decoder_->start();
 
-    QWidget::setWindowTitle(QString::fromStdString(name));
+    QWidget::setWindowTitle("Playing");
 
     return true;
 }

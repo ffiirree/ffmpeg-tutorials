@@ -42,8 +42,8 @@ git clone https://github.com/ffiirree/ffmpeg_examples.git --recursive
 - [ ] [simple filter](/04_simple_filters/README.md)
 - [ ] [complex filter](/05_complex_filter/README.md)
 - [ ] [generating high quality GIF](/06_gen_gif/README.md)
-- [ ] audio player with Qt
-- [ ] video player with Qt
+- [ ] [audio player with Qt](/07_audio_player/README.md)
+- [ ] [video player with Qt](/08_video_player/README.md)
 - [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md)
 
 

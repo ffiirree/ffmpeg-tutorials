@@ -7,7 +7,6 @@
 #include "mediadecoder.h"
 #include "logging.h"
 #include "fmt/format.h"
-#include "audioplayer.h"
 
 class VideoPlayer : public QWidget {
     Q_OBJECT
@@ -30,7 +29,6 @@ protected:
     }
 
     MediaDecoder* decoder_{ nullptr };
-    AudioPlayer * audio_player_{nullptr};
 
     AVFrame *frame_{ nullptr };
     std::mutex mtx_;

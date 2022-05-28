@@ -66,7 +66,7 @@ public:
 
     void set_video_callback(std::function<void(AVFrame *)> callback) { video_callback_ = std::move(callback); }
     void set_audio_callback(std::function<std::pair<int64_t, bool>(RingBuffer&)> callback) { audio_callback_ = std::move(callback); }
-    void set_period_size(int64_t size) { period_size_ = size; }
+    void set_period_size(size_t size) { period_size_ = size; }
 
 	void pause() { paused_ = true; }
 	void resume() { paused_ = false; }
@@ -130,7 +130,7 @@ private:
             [](AVPacket** packet) { av_packet_free(packet); }
     };
 
-    int64_t period_size_{ 4096 * 2 };
+    size_t period_size_{ 4096 * 2 };
 
     std::function<void(AVFrame *)> video_callback_{ [](AVFrame *){ } };
     std::function<std::pair<int64_t, bool>(RingBuffer&)> audio_callback_{ [](RingBuffer&) { return std::pair{0, false}; } };

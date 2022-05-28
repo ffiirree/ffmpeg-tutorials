@@ -45,15 +45,18 @@ endif()
 
 add_definitions(-D__STDC_CONSTANT_MACROS)
 
+list(
+    APPEND
+        LIBS
+        Qt5::Widgets Qt5::Gui Qt5::Multimedia
+        glog::glog fmt::fmt
+        FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter FFmpeg::swscale FFmpeg::swresample
+        $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
+)
+
 function(create_exe name source_file)
     add_executable(${name} ${source_file})
-    target_link_libraries(${name}
-        PRIVATE
-            Qt5::Widgets Qt5::Gui Qt5::Multimedia
-            glog::glog fmt::fmt
-            FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter FFmpeg::swscale FFmpeg::swresample
-            $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
-    )
+    target_link_libraries(${name} PRIVATE ${LIBS})
 endfunction(create_exe)
 
 create_exe(remuxing 01_remuxing/remuxing.cpp)
@@ -62,14 +65,6 @@ create_exe(recording 03_recording/recording.cpp)
 create_exe(filter 04_simple_filter/filter.cpp)
 create_exe(complex_filter 05_complex_filter/complex_filter.cpp)
 
-file(GLOB_RECURSE MEDIA_PLAYER_SOURCES 09_media_player/*.cpp)
-
-list(APPEND MEDIA_PLAYER_SOURCES $<$<PLATFORM_ID:Windows>:09_media_player/ico_win32.rc>)
-
-create_exe(player "${MEDIA_PLAYER_SOURCES}")
-target_include_directories(player
-    PRIVATE
-        3rdparty
-        09_media_player/core
-        09_media_player/player
-)
+add_subdirectory(07_audio_player)
+add_subdirectory(08_video_player)
+add_subdirectory(09_media_player)
