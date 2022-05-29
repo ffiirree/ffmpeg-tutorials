@@ -208,6 +208,7 @@ void MediaDecoder::video_thread()
 
 	while (running()) {
 		int ret = av_read_frame(fmt_ctx_, packet_);
+        LOG(INFO) << "packet = " << packet_->pts;
 		if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(fmt_ctx_->pb)) && (exit_flags_ & 0b1000)) {
                 LOG(INFO) << "[READ THREAD] PUT NULL PACKET TO FLUSH DECODERS";
@@ -216,7 +217,7 @@ void MediaDecoder::video_thread()
                 av_packet_unref(packet_);
 
                 exit_flags_ &= ~0b1000;
-                break;
+                break; // TODO: ERROR exit here
             }
 
             LOG(ERROR) << "[READ THREAD] read frame failed";

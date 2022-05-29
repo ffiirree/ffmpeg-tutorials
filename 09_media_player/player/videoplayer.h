@@ -23,9 +23,9 @@ protected:
     {
         std::lock_guard lock(mtx_);
 
-        if(frame_ && frame_->format == AV_PIX_FMT_RGB24) {
+        if(frame_ && frame_->format == AV_PIX_FMT_BGRA) {
             QPainter painter(this);
-            painter.drawImage(rect(), QImage(static_cast<const uchar*>(frame_->data[0]), frame_->width, frame_->height, QImage::Format_RGB888));
+            painter.drawImage(rect(), QImage(static_cast<const uchar*>(frame_->data[0]), frame_->width, frame_->height, QImage::Format_ARGB32));
         }
     }
 

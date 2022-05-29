@@ -2,6 +2,8 @@
 #include "fmt/core.h"
 #include "fmt/ranges.h"
 #include "ringbuffer.h"
+#include <chrono>
+using namespace std::chrono_literals;
 
 bool MediaDecoder::open(const std::string& name, const std::string& format, const string& filters_descr, AVPixelFormat pix_fmt, const std::map<std::string, std::string>& options)
 {
@@ -277,43 +279,38 @@ bool MediaDecoder::create_filters()
 	return true;
 }
 
-void MediaDecoder::read_thread()
+void MediaDecoder::read_thread_f()
 {
 	LOG(INFO) << "[READ THREAD] STARTED@" << std::this_thread::get_id();
-
-    exit_flags_ |= 0b001;
+    defer(LOG(INFO) << "[READ THREAD] EXITED");
 
 	while (running()) {
 		if (paused()) {
-			av_usleep(20000);
+            std::this_thread::sleep_for(20ms);
 			continue;
 		}
 
         // if the queue are full, no need to read more
         if(video_packet_buffer_.full() || audio_packet_buffer_.full()) {
-            av_usleep(10000);
+            std::this_thread::sleep_for(10ms);
             continue;
         }
 
 		int ret = av_read_frame(fmt_ctx_, packet_);
 		if (ret < 0) {
-            if ((ret == AVERROR_EOF || avio_feof(fmt_ctx_->pb)) && (exit_flags_ & 0b1000)) {
+            if ((ret == AVERROR_EOF || avio_feof(fmt_ctx_->pb))) {
                 LOG(INFO) << "[READ THREAD] PUT NULL PACKET TO FLUSH DECODERS";
                 // [flushing] 1. Instead of valid input, send NULL to the avcodec_send_packet() (decoding) or avcodec_send_frame() (encoding) functions. This will enter draining mode.
                 // [flushing] 2. Call avcodec_receive_frame() (decoding) or avcodec_receive_packet() (encoding) in a loop until AVERROR_EOF is returned.The functions will not return AVERROR(EAGAIN), unless you forgot to enter draining mode.
                 video_packet_buffer_.push([this](AVPacket* packet) { av_packet_unref(packet); });
                 audio_packet_buffer_.push([this](AVPacket* packet) { av_packet_unref(packet); });
 
-                exit_flags_ &= ~0b1000;
-                break;
+                return;
             }
 
             LOG(ERROR) << "[READ THREAD] read frame failed";
             break;
 		}
-        else {
-            exit_flags_ |= 0b1000;
-        }
 
         first_pts_ = (first_pts_ == AV_NOPTS_VALUE) ? av_gettime_relative() : first_pts_;
 
@@ -333,22 +330,16 @@ void MediaDecoder::read_thread()
             av_packet_unref(packet_);
         }
 	}
-
-	LOG(INFO) << "[READ THREAD] EXITED";
-    std::unique_lock<std::mutex> lock(exit_mtx_);
-    exit_flags_ &= ~0b0001;
-    cond_.notify_all();
 }
 
-void MediaDecoder::video_thread()
+void MediaDecoder::video_thread_f()
 {
     LOG(INFO) << "[VIDEO THREAD] STARTED@" << std::this_thread::get_id();
+    defer(LOG(INFO) << "[VIDEO THREAD] EXITED");
 
-    exit_flags_ |= 0b010;
-
-    while(video_stream_index_ >=0 && running() && (exit_flags_ & 0b0010)) {
+    while(video_stream_index_ >=0 && running()) {
         if (video_packet_buffer_.empty()) {
-            av_usleep(10000);
+            std::this_thread::sleep_for(10ms);
             continue;
         }
 
@@ -366,16 +357,15 @@ void MediaDecoder::video_thread()
             }
             // fully flushed, exit
             else if (ret == AVERROR_EOF) {
-                exit_flags_ &= ~0b0010;
                 // [flushing] 3. Before decoding can be resumed again, the codec has to be reset with avcodec_flush_buffers()
                 avcodec_flush_buffers(video_decoder_ctx_);
-                break;
+                LOG(INFO) << "[VIDEO THREAD] EOF";
+                return;
             }
             // error, exit
             else if (ret < 0) {
                 LOG(ERROR) << "[VIDEO THREAD] legitimate decoding errors";
-                exit_flags_ &= ~0b0010;
-                break;
+                return;
             }
 
             decoded_video_frame_->pts = (decoded_video_frame_->pts == AV_NOPTS_VALUE) ?
@@ -409,26 +399,20 @@ void MediaDecoder::video_thread()
             }
         }
     }
-
-    LOG(INFO) << "[VIDEO THREAD] EXITED";
-    std::unique_lock<std::mutex> lock(exit_mtx_);
-    exit_flags_ &= ~0b0010;
-    cond_.notify_all();
 }
 
-void MediaDecoder::audio_thread()
+void MediaDecoder::audio_thread_f()
 {
     LOG(INFO) << "[AUDIO THREAD] STARTED@" << std::this_thread::get_id();
-
-    exit_flags_ |= 0b100;
+    defer(LOG(INFO) << "[AUDIO THREAD] EXITED");
 
     LOG(INFO) << "[AUDIO THREAD] period size = " << period_size_;
     RingBuffer ring_buffer(period_size_ * 2);
     int64_t buffered_size = 0;
 
-    while(audio_stream_index_ >= 0 && running() && (exit_flags_ & 0b0100)) {
+    while(audio_stream_index_ >= 0 && running()) {
         if (audio_packet_buffer_.empty()) {
-            av_usleep(10000);
+            std::this_thread::sleep_for(10ms);
             continue;
         }
 
@@ -444,17 +428,14 @@ void MediaDecoder::audio_thread()
             if (ret == AVERROR(EAGAIN) ) {
                 break;
             }
-            // fully flushed, exit
-            else if (ret == AVERROR_EOF) {
-                exit_flags_ &= ~0b0100;
+            else if (ret == AVERROR_EOF) { // fully flushed, exit
                 avcodec_flush_buffers(audio_decoder_ctx_);
-                break;
+                LOG(ERROR) << "[AUDIO THREAD] EOF";
+                return;
             }
-            // error, exit
-            else if (ret < 0) {
+            else if (ret < 0) { // error, exit
                 LOG(ERROR) << "[AUDIO THREAD] legitimate decoding errors";
-                exit_flags_ &= ~0b0100;
-                break;
+                return;
             }
 
             decoded_audio_frame_->pts = (decoded_audio_frame_->pts == AV_NOPTS_VALUE) ?
@@ -480,12 +461,12 @@ void MediaDecoder::audio_thread()
 
                 if(ok) break;
 
-                av_usleep(10000);
+                std::this_thread::sleep_for(10ms);
             }
 
             int64_t pts_us = av_rescale_q(decoded_audio_frame_->pts, fmt_ctx_->streams[audio_packet_->stream_index]->time_base, { 1, AV_TIME_BASE });
-            int64_t frame_duration = (decoded_audio_frame_->nb_samples / (double)decoded_audio_frame_->sample_rate) * AV_TIME_BASE;
-            int64_t buffered_duration =  ((buffered_size + ring_buffer.size()) / (double)(2 * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) * decoded_audio_frame_->sample_rate)) * AV_TIME_BASE;
+            int64_t frame_duration = (decoded_audio_frame_->nb_samples * AV_TIME_BASE) / decoded_audio_frame_->sample_rate;
+            int64_t buffered_duration =  ((buffered_size + ring_buffer.size()) * AV_TIME_BASE / (2 * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) * decoded_audio_frame_->sample_rate));
             audio_clock_ = pts_us + frame_duration - buffered_duration;
             audio_clock_ts_ = av_gettime_relative();
 
@@ -497,11 +478,6 @@ void MediaDecoder::audio_thread()
             // @}
         }
     }
-
-    LOG(INFO) << "[AUDIO THREAD] EXITED";
-    std::unique_lock<std::mutex> lock(exit_mtx_);
-    exit_flags_ &= ~0b0100;
-    cond_.notify_all();
 }
 
 void MediaDecoder::close()
@@ -511,9 +487,9 @@ void MediaDecoder::close()
     paused_ = false;
 
     // wait for the threads to exit
-    std::unique_lock<std::mutex> lock(exit_mtx_);
-    cond_.wait(lock, [this](){ return !(exit_flags_ & 0b111); });
-    exit_flags_ = 0b0000;
+    if(read_thread_.joinable()) read_thread_.join();
+    if(video_thread_.joinable()) video_thread_.join();
+    if(audio_thread_.joinable()) audio_thread_.join();
 
 	first_pts_ = AV_NOPTS_VALUE;
 

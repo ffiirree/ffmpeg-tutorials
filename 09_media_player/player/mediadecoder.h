@@ -42,21 +42,21 @@ public:
 
     void start()
     {
-        if (!opened()) {
-            LOG(ERROR) << "[DECODER] not opened";
+        if (!opened() || running_) {
+            LOG(ERROR) << "[DECODER] already running or not opened";
             return;
         }
 
         running_ = true;
 
-        std::thread([this](){ this->read_thread(); }).detach();
-        std::thread([this](){ this->video_thread(); }).detach();
-        std::thread([this](){ this->audio_thread(); }).detach();
+        read_thread_ = std::thread([this](){ this->read_thread_f(); });
+        video_thread_ = std::thread([this](){ this->video_thread_f(); });
+        audio_thread_ = std::thread([this](){ this->audio_thread_f(); });
     }
 
-	void read_thread();
-    void video_thread();
-    void audio_thread();
+	void read_thread_f();
+    void video_thread_f();
+    void audio_thread_f();
 	
 	int width() { return video_decoder_ctx_ ? video_decoder_ctx_->width : 480; }
 	int height() { return video_decoder_ctx_ ? video_decoder_ctx_->height : 360; }
@@ -78,9 +78,9 @@ private:
     std::atomic<bool> paused_{ false };
     std::atomic<bool> opened_{ false };
 
-    std::mutex exit_mtx_;
-    std::condition_variable cond_;
-    uint8_t exit_flags_{ 0b0000 };   // three bits for EOF / READ / VIDEO / AUDIO respectively.
+    std::thread read_thread_;
+    std::thread video_thread_;
+    std::thread audio_thread_;
 
 	AVFormatContext* fmt_ctx_{ nullptr };
 	int video_stream_index_{ -1 };
@@ -117,7 +117,7 @@ private:
 
     double clock_s()
     {
-        return clock_us() / (double) AV_TIME_BASE;
+        return (double) clock_us() / (double) AV_TIME_BASE;
     }
 
     RingVector<AVPacket*, BUFFER_SIZE> video_packet_buffer_{

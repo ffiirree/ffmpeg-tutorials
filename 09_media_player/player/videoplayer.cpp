@@ -44,7 +44,7 @@ VideoPlayer::VideoPlayer(QWidget* parent)
 
 bool VideoPlayer::play(const std::string& name, const std::string& fmt, const std::string& filter_descr)
 {
-    if (!decoder_->open(name, fmt, filter_descr, AV_PIX_FMT_RGB24, {})) {
+    if (!decoder_->open(name, fmt, filter_descr, AV_PIX_FMT_BGRA, {})) {
         return false;
     }
 

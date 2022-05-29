@@ -53,3 +53,4 @@ git clone https://github.com/ffiirree/ffmpeg_examples.git --recursive
 - [ffmpeg-libav-tutorial](https://github.com/leandromoreira/ffmpeg-libav-tutorial)
 - [How to Write a Video Player in Less Than 1000 Lines](http://dranger.com/ffmpeg/)
 - [High quality GIF with FFmpeg](http://blog.pkh.me/p/21-high-quality-gif-with-ffmpeg.html)
+- [SimplePlayer](https://www.cnblogs.com/TaigaCon/)
