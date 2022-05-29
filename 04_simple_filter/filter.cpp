@@ -165,8 +165,7 @@ int main(int argc, char* argv[])
     sprintf(args, "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d",
             decoder_ctx->width, decoder_ctx->height,
             decoder_ctx->pix_fmt,
-            decoder_fmt_ctx->streams[video_stream_idx]->time_base.num, decoder_fmt_ctx->streams[video_stream_idx]->time_base.den,
-            decoder_fmt_ctx->streams[video_stream_idx]->sample_aspect_ratio.num, decoder_fmt_ctx->streams[video_stream_idx]->sample_aspect_ratio.den);
+            decoder_fmt_ctx->streams[video_stream_idx]->time_base.num, decoder_fmt_ctx->streams[video_stream_idx]->time_base.den);
     printf("filter@buffer[args]: %s\n", args);
 
     if (avfilter_graph_create_filter(&in_filter_ctx, buffersrc, "in", args, nullptr, filter_graph) < 0) {

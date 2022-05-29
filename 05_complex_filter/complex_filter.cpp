@@ -13,6 +13,7 @@ extern "C" {
 #include <libavfilter\buffersrc.h>
 }
 
+#include "utils.h"
 #include "logging.h"
 #include "ringvector.h"
 #include "fmt/format.h"
@@ -94,28 +95,23 @@ public:
         return 0;
     }
 
-    void decode()
-    {
-        running_ = true;
-        std::thread([this](){ decode_thread(); }).detach();
-    }
-
     void decode_thread()
     {
-        LOG(INFO) << "[DECODE THREAD] START @ " << std::this_thread::get_id();
+        LOG(INFO) << "[DECODER THREAD @ " << std::this_thread::get_id() << "] START";
+        defer(LOG(INFO) << "[DECODER THREAD @ " << std::this_thread::get_id() << "] EXITED");
 
         while(running_) {
             av_packet_unref(packet_);
             int ret = av_read_frame(fmt_ctx_, packet_);
             if (ret < 0) {
                 if ((ret == AVERROR_EOF || avio_feof(fmt_ctx_->pb))) {
-                    LOG(INFO) << "[READ THREAD] PUT NULL PACKET TO FLUSH DECODERS";
+                    LOG(INFO) << "[DECODER THREAD] PUT NULL PACKET TO FLUSH DECODERS";
                     av_packet_unref(packet_);
+                }
+                else {
+                    LOG(ERROR) << "[DECODER THREAD] read frame failed";
                     break;
                 }
-
-                LOG(ERROR) << "[READ THREAD] read frame failed";
-                break;
             }
 
             if (packet_->stream_index == video_stream_idx_) {
@@ -127,11 +123,12 @@ public:
                         break;
                     }
                     else if (ret == AVERROR_EOF) { // fully flushed, exit
+                        LOG(INFO) << "[DECODER THREAD] EOF";
                         running_ = false;
                         break;
                     }
                     else if (ret < 0) { // error, exit
-                        LOG(ERROR) << "[VIDEO THREAD] legitimate decoding errors";
+                        LOG(ERROR) << "[DECODER THREAD] legitimate decoding errors";
                         running_ = false;
                         break;
                     }
@@ -140,9 +137,8 @@ public:
                         av_usleep(20000);
                     }
 
-
-                    LOG(INFO) << fmt::format("[DECODER @ {}] pts = {}, frame = {}",
-                                             std::hash<std::thread::id>{}(std::this_thread::get_id()), video_frame_->pts, video_decode_ctx_->frame_number);
+                    LOG(INFO) << "[DECODER THREAD @ " << std::this_thread::get_id() << "] pts = " << video_frame_->pts
+                              << ", frame = " << video_decode_ctx_->frame_number;
                     video_frame_buffer_.push([this](AVFrame *frame) {
                         av_frame_unref(frame);
                         av_frame_move_ref(frame, video_frame_);
@@ -154,7 +150,6 @@ public:
             }
         }
 
-        LOG(INFO) << "[DECODER] EXIT";
         running_ = false;
     }
 
@@ -171,6 +166,7 @@ public:
 
 //private:
     std::atomic<bool> running_{false};
+    std::atomic<bool> flushed{false};
 
     int video_stream_idx_{-1};
     int audio_stream_idx_{-1};
@@ -208,6 +204,8 @@ public:
         av_write_trailer(fmt_ctx_);
 
         avformat_free_context(fmt_ctx_);
+        if (fmt_ctx_ && !(fmt_ctx_->oformat->flags & AVFMT_NOFILE))
+            avio_closep(&fmt_ctx_->pb);
 
         avcodec_free_context(&video_encode_ctx_);
         avcodec_free_context(&audio_encode_ctx_);
@@ -298,7 +296,7 @@ public:
             if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                 break;
             } else if(ret < 0) {
-                LOG(ERROR) << "encoder: avcodec_receive_packet()";
+                LOG(ERROR) << "avcodec_receive_packet()";
                 return -1;
             }
 
@@ -307,7 +305,7 @@ public:
             av_packet_rescale_ts(packet_, video_encode_ctx_->time_base, fmt_ctx_->streams[video_stream_idx_]->time_base);
 
             if (av_interleaved_write_frame(fmt_ctx_, packet_) != 0) {
-                LOG(ERROR) << "encoder: av_interleaved_write_frame()";
+                LOG(ERROR) << "av_interleaved_write_frame()";
                 return -1;
             }
         }
@@ -445,6 +443,7 @@ int main(int argc, char* argv[])
     std::string output_file;
 
     std::vector<std::shared_ptr<Decoder>> decoders;
+    std::vector<std::thread> threads;
     ComplexFilter filter;
     Encoder encoder;
 
@@ -472,44 +471,33 @@ int main(int argc, char* argv[])
         filter.create_buffersrc(decoder->filter_args());
     }
 
-    filter.create("[0:v] scale=320:-1:flags=lanczos,vflip [s];[1:v][s]overlay=10:10");
+    filter.create("[0:v] scale=64:-1:flags=lanczos,vflip [s];[1:v][s]overlay=10:10");
     encoder.open(output_file, filter.width(), filter.height(), filter.format(), filter.sample_aspect_ratio(), filter.framerate(), filter.time_base());
 
     AVFrame * frame = av_frame_alloc();
     AVFrame * filtered_frame = av_frame_alloc();
 
-    for (auto& decoder : decoders) {
-        decoder->decode();
-    }
-
     std::atomic<bool> running{true};
-    std::thread([&](){
+    for (auto & decoder : decoders) {
+        threads.emplace_back(std::thread([&](){ decoder->running_ = true; decoder->decode_thread(); }));
+    }
+    threads.emplace_back([&](){
         LOG(INFO) << "[FILTER THREAD] START @ " << std::this_thread::get_id();
 
         while(running) {
             for(int i = 0; i < decoders.size(); i++) {
-
-//                running = false;
-//                for (auto decoder : decoders) {
-//                    if(!decoder->video_frame_buffer_.empty() || decoder->running_) {
-//                        running = true;
-//                    }
-//                }
-
-                // TODO:
-                if (decoders[i]->video_frame_buffer_.empty()) {
-                    if(decoders[i]->running_) {
-                        av_usleep(10000);
-                        continue;
-                    }
-//                    continue;
+                if (decoders[i]->video_frame_buffer_.empty() && decoders[i]->running_) {
+                    av_usleep(10000);
+                    continue;
                 }
 
                 int ret = 0;
                 if (decoders[i]->video_frame_buffer_.empty()) {
-//                    LOG(INFO) << i << " -> null";
-                    ret = av_buffersrc_add_frame_flags(filter.buffersrc_ctxs_[i], nullptr, AV_BUFFERSRC_FLAG_PUSH);
-//                    av_frame_free(&f);
+                    if (!decoders[i]->flushed) {
+                        LOG(INFO) << i << " -> null";
+                        decoders[i]->flushed = true;
+                        ret = av_buffersrc_add_frame_flags(filter.buffersrc_ctxs_[i], nullptr, AV_BUFFERSRC_FLAG_PUSH);
+                    }
                 }
                 else {
                     decoders[i]->video_frame_buffer_.pop([=](AVFrame * popped) {
@@ -537,6 +525,7 @@ int main(int argc, char* argv[])
                         // flush and exit
                         ret = encoder.encode_frame(nullptr);
                         if (ret == AVERROR_EOF) {
+                            LOG(INFO) << "[ENCODER THREAD] EOF";
                             running = false;
                         }
                         break;
@@ -554,7 +543,13 @@ int main(int argc, char* argv[])
         }
         LOG(INFO) << "[FILTER THREAD] EXIT";
         return 0;
-    }).join();
+    });
+
+    for (auto& thread : threads) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
 
     LOG(INFO) << "EXITED";
 

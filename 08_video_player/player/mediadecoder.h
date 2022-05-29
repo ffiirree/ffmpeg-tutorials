@@ -37,7 +37,7 @@ public:
 	bool running() { return running_; }
 
     void start();
-    void video_thread();
+    void video_thread_f();
 	
 	int width() { return video_decoder_ctx_ ? video_decoder_ctx_->width : 480; }
 	int height() { return video_decoder_ctx_ ? video_decoder_ctx_->height : 360; }
@@ -50,9 +50,7 @@ private:
 	std::atomic<bool> running_{ false };
     std::atomic<bool> opened_{ false };
 
-    std::mutex exit_mtx_;
-    std::condition_variable cond_;
-    uint8_t exit_flags_{ 0b0000 };   // three bits for EOF  / VIDEO respectively.
+    std::thread video_thread_;
 
 	AVFormatContext* fmt_ctx_{ nullptr };
 	int video_stream_index_{ -1 };

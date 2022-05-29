@@ -87,6 +87,7 @@ int main(int argc, char* argv[])
     av_dump_format(encoder_fmt_ctx, 0, out_filename, 1);
 
     AVPacket * packet = av_packet_alloc();
+    int64_t frame_number = 0;
     while(av_read_frame(decoder_fmt_ctx, packet) >= 0) {
         if (stream_mapping[packet->stream_index] < 0) {
             av_packet_unref(packet);
@@ -97,14 +98,14 @@ int main(int argc, char* argv[])
         packet->stream_index = stream_mapping[packet->stream_index];
 
         if (encoder_fmt_ctx->streams[packet->stream_index]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-            printf("pts: %lld, dts: %lld, duration: %lld\n", packet->pts, packet->dts, packet->duration);
+            printf(" -- pts: %lld, dts: %lld, duration: %lld, frame = %lld\n",
+                   packet->pts, packet->dts, packet->duration, ++frame_number);
         }
 
         if (av_interleaved_write_frame(encoder_fmt_ctx, packet) != 0) {
             fprintf(stderr, "encoder: av_interleaved_write_frame()\n");
             return -1;
         }
-
         av_packet_unref(packet);
     }
     av_packet_free(&packet);

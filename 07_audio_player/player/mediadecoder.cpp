@@ -92,31 +92,29 @@ bool MediaDecoder::open(const std::string& name)
 	return true;
 }
 
-void MediaDecoder::audio_thread()
+void MediaDecoder::audio_thread_f()
 {
 	LOG(INFO) << "[AUDIO THREAD] STARTED@" << std::this_thread::get_id();
+    defer(LOG(INFO) << "[READ THREAD] EXITED");
 
-    exit_flags_ |= 0b001;
     RingBuffer ring_buffer(period_size_ * 2);
 
 	while (running()) {
+        av_packet_unref(packet_);
 		int ret = av_read_frame(fmt_ctx_, packet_);
 		if (ret < 0) {
-            if ((ret == AVERROR_EOF || avio_feof(fmt_ctx_->pb)) && (exit_flags_ & 0b1000)) {
-                LOG(INFO) << "[READ THREAD] PUT NULL PACKET TO FLUSH DECODERS";
+            if ((ret == AVERROR_EOF || avio_feof(fmt_ctx_->pb))) {
+                LOG(INFO) << "[AUDIO THREAD] PUT NULL PACKET TO FLUSH DECODERS";
                 // [flushing] 1. Instead of valid input, send NULL to the avcodec_send_packet() (decoding) or avcodec_send_frame() (encoding) functions. This will enter draining mode.
                 // [flushing] 2. Call avcodec_receive_frame() (decoding) or avcodec_receive_packet() (encoding) in a loop until AVERROR_EOF is returned.The functions will not return AVERROR(EAGAIN), unless you forgot to enter draining mode.
                 av_packet_unref(packet_);
-
-                exit_flags_ &= ~0b1000;
+                packet_->stream_index = audio_stream_index_;
+            }
+            else {
+                LOG(ERROR) << "[AUDIO THREAD] read frame failed";
                 break;
             }
-
-            LOG(ERROR) << "[READ THREAD] read frame failed";
-            break;
 		}
-        exit_flags_ |= 0b1000;
-
 
         first_pts_ = (first_pts_ == AV_NOPTS_VALUE) ? av_gettime_relative() : first_pts_;
 
@@ -128,17 +126,14 @@ void MediaDecoder::audio_thread()
                 if (ret == AVERROR(EAGAIN) ) {
                     break;
                 }
-                    // fully flushed, exit
-                else if (ret == AVERROR_EOF) {
-                    exit_flags_ &= ~0b0100;
+                else if (ret == AVERROR_EOF) { // fully flushed, exit
                     avcodec_flush_buffers(audio_decoder_ctx_);
-                    break;
+                    LOG(INFO) << "[AUDIO THREAD] EOF";
+                    return;
                 }
-                    // error, exit
-                else if (ret < 0) {
+                else if (ret < 0) { // error, exit
                     LOG(ERROR) << "[AUDIO THREAD] legitimate decoding errors";
-                    exit_flags_ &= ~0b0100;
-                    break;
+                    return;
                 }
 
                 decoded_audio_frame_->pts = (decoded_audio_frame_->pts == AV_NOPTS_VALUE) ?
@@ -153,7 +148,6 @@ void MediaDecoder::audio_thread()
                 ring_buffer.write((const char *)buffer, samples_pre_ch * 2 * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16));
                 av_free(buffer);
 
-
                 while(ring_buffer.size() >= period_size_) {
                     if (ring_buffer.continuous_size() < period_size_) {
                         ring_buffer.defrag();
@@ -166,22 +160,14 @@ void MediaDecoder::audio_thread()
                     av_usleep(10000);
                 }
 
-                LOG(INFO) << fmt::format("[AUDIO THREAD] pts = {:>6.3f}, ts = {:>6.3f}",
+                LOG(INFO) << fmt::format("[AUDIO THREAD] pts = {:>6.3f}s, ts = {:>6.3f}s",
                                          decoded_audio_frame_->pts * av_q2d(fmt_ctx_->streams[audio_stream_index_]->time_base),
                                          (av_gettime_relative() - first_pts_) / 1000000.0
                 );
                 // @}
             }
         }
-        else {
-            av_packet_unref(packet_);
-        }
 	}
-
-	LOG(INFO) << "[READ THREAD] EXITED";
-    std::unique_lock<std::mutex> lock(exit_mtx_);
-    exit_flags_ &= ~0b0001;
-    cond_.notify_all();
 }
 
 void MediaDecoder::close()
@@ -189,10 +175,7 @@ void MediaDecoder::close()
 	running_ = false;
     opened_ = false;
 
-    // wait for the threads to exit
-    std::unique_lock<std::mutex> lock(exit_mtx_);
-    cond_.wait(lock, [this](){ return !(exit_flags_ & 0b111); });
-    exit_flags_ = 0b0000;
+    if (audio_thread_.joinable()) audio_thread_.join();
 
 	first_pts_ = AV_NOPTS_VALUE;
 

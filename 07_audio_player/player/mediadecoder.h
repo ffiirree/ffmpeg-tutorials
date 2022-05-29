@@ -37,16 +37,16 @@ public:
 
     void start()
     {
-        if (!opened()) {
-            LOG(ERROR) << "[DECODER] not opened";
+        if (!opened() || running_) {
+            LOG(ERROR) << "[DECODER] already running or not opened";
             return;
         }
 
         running_ = true;
-        std::thread([this](){ this->audio_thread(); }).detach();
+        audio_thread_ = std::thread([this](){ this->audio_thread_f(); });
     }
 
-    void audio_thread();
+    void audio_thread_f();
 
     void set_audio_callback(std::function<std::pair<int64_t, bool>(RingBuffer&)> callback) { audio_callback_ = std::move(callback); }
     void set_period_size(int64_t size) { period_size_ = size; }
@@ -57,9 +57,7 @@ private:
 	std::atomic<bool> running_{ false };
     std::atomic<bool> opened_{ false };
 
-    std::mutex exit_mtx_;
-    std::condition_variable cond_;
-    uint8_t exit_flags_{ 0b0000 };   // three bits for EOF / READ / VIDEO / AUDIO respectively.
+    std::thread audio_thread_;
 
 	AVFormatContext* fmt_ctx_{ nullptr };
     int audio_stream_index_{ -1 };
