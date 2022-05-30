@@ -295,7 +295,7 @@ void MediaDecoder::read_thread_f()
                 av_packet_move_ref(packet, packet_);
             });
         }
-        else if (packet_->stream_index == audio_stream_index_){
+        else if (packet_->stream_index == audio_stream_index_) {
             audio_packet_buffer_.push([this](AVPacket * packet){
                 av_packet_unref(packet);
                 av_packet_move_ref(packet, packet_);
@@ -330,15 +330,13 @@ void MediaDecoder::video_thread_f()
             if (ret == AVERROR(EAGAIN)) {
                 break;
             }
-            // fully flushed, exit
-            else if (ret == AVERROR_EOF) {
+            else if (ret == AVERROR_EOF) { // fully flushed, exit
                 // [flushing] 3. Before decoding can be resumed again, the codec has to be reset with avcodec_flush_buffers()
                 avcodec_flush_buffers(video_decoder_ctx_);
                 LOG(INFO) << "[VIDEO THREAD] EOF";
                 return;
             }
-            // error, exit
-            else if (ret < 0) {
+            else if (ret < 0) { // error, exit
                 LOG(ERROR) << "[VIDEO THREAD] legitimate decoding errors";
                 return;
             }
@@ -354,9 +352,7 @@ void MediaDecoder::video_thread_f()
 
             while (true) {
                 av_frame_unref(filtered_frame_);
-                ret = av_buffersink_get_frame_flags(buffersink_ctx_, filtered_frame_, AV_BUFFERSINK_FLAG_NO_REQUEST);                  
-                if (ret < 0) {
-                    ret = 0;
+                if (av_buffersink_get_frame_flags(buffersink_ctx_, filtered_frame_, AV_BUFFERSINK_FLAG_NO_REQUEST) < 0) {
                     break;
                 }
 
@@ -432,6 +428,10 @@ void MediaDecoder::audio_thread_f()
 
                 auto [written_size, ok] = audio_callback_(ring_buffer);
                 buffered_size = written_size;
+
+                if (!ok) {
+                    av_usleep(15000);
+                }
             }
 
             int64_t pts_us = av_rescale_q(decoded_audio_frame_->pts, fmt_ctx_->streams[audio_packet_->stream_index]->time_base, { 1, AV_TIME_BASE });

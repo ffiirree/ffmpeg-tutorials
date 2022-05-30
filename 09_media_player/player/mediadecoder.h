@@ -20,7 +20,7 @@ extern "C" {
 #include "utils.h"
 #include "logging.h"
 
-const int BUFFER_SIZE = 10;
+const int BUFFER_SIZE = 20;
 
 class MediaDecoder : public QObject {
 	Q_OBJECT
