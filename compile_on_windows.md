@@ -2,7 +2,7 @@
 
 ## CMake
 
-Download form [CMake](https://cmake.org/download/) and install on **Windows**.
+Download from [CMake](https://cmake.org/download/) and install on **Windows**.
 
 ## MSYS2
 
@@ -22,13 +22,13 @@ Change `rem set MSYS2_PATH_TYPE=inherit` to `set MSYS2_PATH_TYPE=inherit`
 
 ## libx264
 
-### download
+### Download
 
 ```bash
 git clone https://code.videolan.org/videolan/x264.git
 ```
 
-### config & compile
+### Config & Compile
 
 ```bash
 cd x264
@@ -39,13 +39,13 @@ make install
 
 ## libx265
 
-### download
+### Download
 
 ```bash
 git clone https://bitbucket.org/multicoreware/x265_git.git
 ```
 
-### config & compile
+### Config & Compile
 
 ```bash
 cd x265_git/build
@@ -57,11 +57,11 @@ make install
 
 ## FFmpeg
 
-### download
+### Download
 
-Download from [FFmpeg](https://www.ffmpeg.org/download.html#releases).
+Download source code from [FFmpeg](https://www.ffmpeg.org/download.html#releases).
 
-### config & compile
+### Config & Compile
 
 ```bash
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig

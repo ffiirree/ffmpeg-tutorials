@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
                     out_packet->duration = decoded_frame->pkt_duration;
                     av_packet_rescale_ts(out_packet, encoder_ctx->time_base, encoder_fmt_ctx->streams[0]->time_base);
 
-                    printf("pts: %lld, dts: %lld, duration: %lld\n", out_packet->pts, out_packet->dts, out_packet->duration);
+                    printf(" -- pts: %lld, dts: %lld, duration: %lld\n", out_packet->pts, out_packet->dts, out_packet->duration);
 
                     if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
                         fprintf(stderr, "encoder: av_interleaved_write_frame()\n");

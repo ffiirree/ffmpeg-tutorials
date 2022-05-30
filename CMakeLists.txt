@@ -15,7 +15,7 @@ endif()
 ########################################################################################################################
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
 
-# 3rdparty: QHotkey glog
+# 3rdparty: glog fmt
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "build static libraries.")
 set(WITH_GFLAGS OFF CACHE BOOL "Use gflags")
 add_subdirectory(3rdparty/glog EXCLUDE_FROM_ALL)

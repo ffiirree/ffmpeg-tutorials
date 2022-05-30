@@ -32,13 +32,17 @@ sudo apt install qt5-default libqt5x11extras5-dev qtmultimedia5-dev
 
 ```bash
 git clone https://github.com/ffiirree/ffmpeg_examples.git --recursive
+
+# 或者单独夺取子模块
+git submodule init
+git submodule update
 ```
 
 ## Examples
 
 - [x] [remuxing](/01_remuxing/README.md)
 - [ ] [transcoding](/02_trancoding/README.md)
-- [ ] [recording camera / screen](/03_recording/README.md)
+- [x] [recording camera / screen](/03_recording/README.md)
 - [ ] [simple filter](/04_simple_filters/README.md)
 - [ ] [complex filter](/05_complex_filter/README.md)
 - [ ] [generating high quality GIF](/06_gen_gif/README.md)
