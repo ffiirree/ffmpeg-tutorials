@@ -2,6 +2,7 @@
 #define PLAYER_RING_BUFFER_H
 
 #include <mutex>
+#include <cstring>
 
 class RingBuffer {
 public:
@@ -65,6 +66,7 @@ public:
         r_size = std::min<size_t>(continuous_size_wo_lock(), r_size); // continuous size
         r_idx_ = (r_idx_ + r_size) % max_size_;
 
+        if (r_size > 0) full_ = false;
         return ptr;
     }
 

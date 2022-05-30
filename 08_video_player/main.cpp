@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     player.show();
 
     // filepath
-    player.play(R"(..\..\hevc.mkv)");
+    player.play(R"(../../hevc.mkv)");
     // find your camera devices: ffmpeg -hide_banner -f dshow -list_devices true -i dummy
     //player.play("video=HD WebCam", "dshow", "hflip");
 

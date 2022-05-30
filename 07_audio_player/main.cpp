@@ -1,5 +1,4 @@
 #include <QApplication>
-#include "utils.h"
 #include "logging.h"
 #include "videoplayer.h"
 
@@ -14,7 +13,7 @@ int main(int argc, char *argv[])
     player.show();
 
     // filepath
-    player.play(R"(..\..\hevc.mkv)");
+    player.play(R"(../../hevc.mkv)");
 
     return a.exec();
 }

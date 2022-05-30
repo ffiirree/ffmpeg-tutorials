@@ -12,7 +12,8 @@ public:
     explicit AudioPlayer(QObject * parent = nullptr) : QObject(parent) {};
     ~AudioPlayer() override
     {
-        audio_output_->stop();
+        if(audio_output_)
+            audio_output_->stop();
     }
 
     int open(int sample_rate, int channels, int sample_size)
@@ -23,10 +24,9 @@ public:
         format.setSampleSize(sample_size);
         format.setCodec("audio/pcm");
         format.setByteOrder(QAudioFormat::LittleEndian);
-        format.setSampleType(QAudioFormat::UnSignedInt);
+        format.setSampleType(QAudioFormat::SignedInt);
 
         QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-
         if (!info.isFormatSupported(format)) {
             LOG(ERROR) << "not support the audio format\n";
             return -1;
@@ -37,6 +37,7 @@ public:
         audio_io_ = audio_output_->start();
 
         if (!audio_io_) {
+            LOG(ERROR) << "audio_io_ is nullptr";
             return -1;
         }
 
@@ -45,12 +46,12 @@ public:
 
     int buffer_free_size()
     {
-        return audio_output_->bytesFree();
+        return audio_output_ ? audio_output_->bytesFree() : 0;
     }
 
     int buffer_size()
     {
-        return audio_output_->bufferSize();
+        return audio_output_ ? audio_output_->bufferSize() : 0;
     }
 
     int buffered_size()
@@ -60,7 +61,7 @@ public:
 
     int period_size()
     {
-        return audio_output_->periodSize();
+        return audio_output_ ? audio_output_->periodSize(): 0;
     }
 
 public slots:

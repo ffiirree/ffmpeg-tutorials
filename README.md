@@ -24,8 +24,20 @@ Examples and tutorials for `decoding/encoding`, `(complex)filtering`, `screen/ca
 ### Ubuntu
 
 ```bash
-sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libavdevice-dev libswscale-dev libavfilter-dev
+sudo apt install build-essential git cmake
+
+sudo apt install ffmpeg libavfilter-dev libavdevice-dev libavutil-dev libavformat-dev libswresample-dev libswscale-dev
+
+# Ubuntu < 22.04
 sudo apt install qt5-default libqt5x11extras5-dev qtmultimedia5-dev 
+
+# Ubuntu 22.04
+# Download qt-xxx.run from https://download.qt.io/archive/qt/
+chmod +x qt-opensource-linux-x64-5.12.12.run
+# Double click qt-opensource-linux-x64-5.12.12.run and install
+
+# for error: GL/gl.h: No such file or directory
+sudo apt install mesa-common-dev
 ```
 
 ### C++ & CMake

@@ -3,6 +3,7 @@
 
 #include <QAudioOutput>
 #include <QAudioFormat>
+#include <QDebug>
 #include "logging.h"
 
 class AudioPlayer : public QObject {
@@ -12,7 +13,8 @@ public:
     explicit AudioPlayer(QObject * parent = nullptr) : QObject(parent) {};
     ~AudioPlayer() override
     {
-        audio_output_->stop();
+        if(audio_output_)
+            audio_output_->stop();
     }
 
     int open(int sample_rate, int channels, int sample_size)
@@ -23,7 +25,7 @@ public:
         format.setSampleSize(sample_size);
         format.setCodec("audio/pcm");
         format.setByteOrder(QAudioFormat::LittleEndian);
-        format.setSampleType(QAudioFormat::UnSignedInt);
+        format.setSampleType(QAudioFormat::SignedInt);
 
         QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
 
@@ -33,7 +35,7 @@ public:
         }
 
         audio_output_ = new QAudioOutput(format, this);
-        audio_output_->setBufferSize(4096 * 10);
+        audio_output_->setBufferSize(4096 * 5);
         audio_io_ = audio_output_->start();
 
         if (!audio_io_) {
@@ -45,12 +47,12 @@ public:
 
     int buffer_free_size()
     {
-        return audio_output_->bytesFree();
+        return audio_output_ ? audio_output_->bytesFree() : 0;
     }
 
     int buffer_size()
     {
-        return audio_output_->bufferSize();
+        return audio_output_ ? audio_output_->bufferSize() : 0;
     }
 
     int buffered_size()
@@ -60,18 +62,13 @@ public:
 
     int period_size()
     {
-        return audio_output_->periodSize();
+        return audio_output_ ? audio_output_->periodSize(): 0;
     }
 
 public slots:
     int64_t write(const char * ptr, int64_t size)
     {
         return audio_io_->write(ptr, size);
-    }
-
-    int64_t write(const QByteArray& buffer)
-    {
-        return audio_io_->write(buffer);
     }
 
 private:

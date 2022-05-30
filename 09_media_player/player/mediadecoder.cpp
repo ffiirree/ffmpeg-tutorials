@@ -382,7 +382,7 @@ void MediaDecoder::audio_thread_f()
     defer(LOG(INFO) << "[AUDIO THREAD] EXITED");
 
     LOG(INFO) << "[AUDIO THREAD] period size = " << period_size_;
-    RingBuffer ring_buffer(period_size_ * 2);
+    RingBuffer ring_buffer(std::max<size_t>(period_size_, 4096) * 2);
     int64_t buffered_size = 0;
 
     while(audio_stream_index_ >= 0 && running()) {
@@ -425,7 +425,6 @@ void MediaDecoder::audio_thread_f()
             ring_buffer.write((const char *)buffer, samples_pre_ch * 2 * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16));
             av_free(buffer);
 
-
             while(ring_buffer.size() >= period_size_) {
                 if (ring_buffer.continuous_size() < period_size_) {
                     ring_buffer.defrag();
@@ -433,10 +432,6 @@ void MediaDecoder::audio_thread_f()
 
                 auto [written_size, ok] = audio_callback_(ring_buffer);
                 buffered_size = written_size;
-
-                if(ok) break;
-
-                std::this_thread::sleep_for(10ms);
             }
 
             int64_t pts_us = av_rescale_q(decoded_audio_frame_->pts, fmt_ctx_->streams[audio_packet_->stream_index]->time_base, { 1, AV_TIME_BASE });

@@ -5,9 +5,9 @@ extern "C" {
 #include <libavutil/timestamp.h>
 #include <libavdevice/avdevice.h>
 #include <libavutil/opt.h>
-#include <libswscale\swscale.h>
-#include <libavutil\imgutils.h>
-#include <libavutil\time.h>
+#include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/time.h>
 }
 
 int main(int argc, char* argv[])

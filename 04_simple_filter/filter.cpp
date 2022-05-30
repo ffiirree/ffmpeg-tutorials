@@ -1,11 +1,11 @@
 extern "C" {
-#include <libavformat\avformat.h>
-#include <libavcodec\avcodec.h>
-#include <libavutil\opt.h>
-#include <libavutil\time.h>
-#include <libavfilter\avfilter.h>
-#include <libavfilter\buffersink.h>
-#include <libavfilter\buffersrc.h>
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/opt.h>
+#include <libavutil/time.h>
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
 }
 
 int main(int argc, char* argv[])

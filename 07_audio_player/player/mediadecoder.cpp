@@ -154,10 +154,6 @@ void MediaDecoder::audio_thread_f()
                     }
 
                     auto [written_size, ok] = audio_callback_(ring_buffer);
-
-                    if(ok) break;
-
-                    av_usleep(10000);
                 }
 
                 LOG(INFO) << fmt::format("[AUDIO THREAD] pts = {:>6.3f}s, ts = {:>6.3f}s",
