@@ -1,5 +1,6 @@
 #include "videoplayer.h"
 #include "ringbuffer.h"
+#include <QMessageBox>
 
 VideoPlayer::VideoPlayer(QWidget* parent)
         : QWidget(parent)
@@ -45,6 +46,7 @@ VideoPlayer::VideoPlayer(QWidget* parent)
 bool VideoPlayer::play(const std::string& name, const std::string& fmt, const std::string& filter_descr)
 {
     if (!decoder_->open(name, fmt, filter_descr, AV_PIX_FMT_BGRA, {})) {
+        QMessageBox::warning(this, "Error", QString::fromStdString({"Open " + name + " failed!"}));
         return false;
     }
 

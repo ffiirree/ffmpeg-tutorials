@@ -5,7 +5,11 @@
 #include <chrono>
 using namespace std::chrono_literals;
 
-bool MediaDecoder::open(const std::string& name, const std::string& format, const string& filters_descr, AVPixelFormat pix_fmt, const std::map<std::string, std::string>& options)
+bool MediaDecoder::open(const std::string& name,
+                        const std::string& format,
+                        const string& filters_descr,
+                        AVPixelFormat pix_fmt,
+                        const std::map<std::string, std::string>& options)
 {
 	pix_fmt_ = pix_fmt;
 	filters_descr_ = filters_descr;
@@ -156,41 +160,12 @@ bool MediaDecoder::open(const std::string& name, const std::string& format, cons
     }
 
 	// prepare 
-	packet_ = av_packet_alloc();
-	if (!packet_) {
-		LOG(ERROR) << "av_packet_alloc";
-		return false;
-	}
-
-    video_packet_ = av_packet_alloc();
-    if (!video_packet_) {
-        LOG(ERROR) << "av_packet_alloc";
-        return false;
-    }
-
-    audio_packet_ = av_packet_alloc();
-    if (!audio_packet_) {
-        LOG(ERROR) << "av_packet_alloc";
-        return false;
-    }
-
-    decoded_video_frame_ = av_frame_alloc();
-	if (!decoded_video_frame_) {
-		LOG(ERROR) << "av_frame_alloc";
-		return false;
-	}
-
-    decoded_audio_frame_ = av_frame_alloc();
-    if (!decoded_audio_frame_) {
-        LOG(ERROR) << "av_frame_alloc";
-        return false;
-    }
-	
-	filtered_frame_ = av_frame_alloc();
-	if (!filtered_frame_) {
-		LOG(ERROR) << "av_frame_alloc";
-		return false;
-	}
+    CHECK_NE(packet_ = av_packet_alloc(), nullptr);
+    CHECK_NE(video_packet_ = av_packet_alloc(), nullptr);
+    CHECK_NE(audio_packet_ = av_packet_alloc(), nullptr);
+    CHECK_NE(decoded_video_frame_ = av_frame_alloc(), nullptr);
+    CHECK_NE(decoded_audio_frame_ = av_frame_alloc(), nullptr);
+    CHECK_NE(filtered_frame_ = av_frame_alloc(), nullptr);
 
 	opened_ = true;
 	LOG(INFO) << "[DECODER]: " << name << " is opened";
@@ -224,11 +199,11 @@ bool MediaDecoder::create_filters()
 	LOG(INFO) << "[DECODER] " << "buffersrc args : " << args;
 
 	if (avfilter_graph_create_filter(&buffersrc_ctx_, buffersrc, "in", args.c_str(), nullptr, filter_graph_) < 0) {
-		LOG(ERROR) << "avfilter_graph_create_filter";
+		LOG(ERROR) << "avfilter_graph_create_filter(buffersrc)";
 		return false;
 	}
 	if (avfilter_graph_create_filter(&buffersink_ctx_, buffersink, "out", nullptr, nullptr, filter_graph_) < 0) {
-		LOG(ERROR) << "avfilter_graph_create_filter";
+		LOG(ERROR) << "avfilter_graph_create_filter(buffersink)";
 		return false;
 	}
 	enum AVPixelFormat pix_fmts[] = { pix_fmt_, AV_PIX_FMT_NONE };

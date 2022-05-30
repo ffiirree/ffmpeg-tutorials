@@ -13,13 +13,13 @@ Examples and tutorials for `decoding/encoding`, `(complex)filtering`, `screen/ca
 > Version = 4.4.2
 
 - [Windows builds](https://www.ffmpeg.org/download.html#build-windows): 注意下载**库(shared)**版本，添加到**环境变量**中
-- [From source](/compile_on_windows.md)
+- [Build from source](/compile_on_windows.md)
 
 #### Qt
 
-> Version >= 5.12.12
+> 6.0 > Version >= 5.12.10
 
-- [Download](https://download.qt.io/archive/qt/): 注意添加到**环境变量**中
+- [Download](https://download.qt.io/archive/qt/): 安装后注意添加目录到**环境变量**中
 
 ### Ubuntu
 
@@ -28,12 +28,17 @@ sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libavdevice
 sudo apt install qt5-default libqt5x11extras5-dev qtmultimedia5-dev 
 ```
 
+### C++ & CMake
+
+- C++ 17
+- CMake >= 3.12
+
 ### Usage
 
 ```bash
 git clone https://github.com/ffiirree/ffmpeg_examples.git --recursive
 
-# 或者单独夺取子模块
+# 或者单独获取子模块
 git submodule init
 git submodule update
 ```
