@@ -66,6 +66,7 @@ git submodule update
 - [ ] [audio player with Qt](/07_audio_player/README.md)
 - [ ] [video player with Qt](/08_video_player/README.md)
 - [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md)
+- [x] [RTMP Streaming](/10_streaming/README.md)
 
 
 ## References
