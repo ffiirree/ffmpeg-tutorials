@@ -95,6 +95,6 @@ ffmpeg -i hevc.mkv -vf "[0:v] fps=5,scale=480:-1:flags=lanczos,split [a][b];[a] 
 
 下图是倒数第2条命令的效果：
 
-![GIF](/medium_full_480_r5_c128_nondither.gif)
+![GIF](/06_gen_gif/medium_full_480_r5_c128_nondither.gif)
 
 总之，尽量测试几种情况，选择最合适的就可以了。
