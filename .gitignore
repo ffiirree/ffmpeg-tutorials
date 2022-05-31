@@ -70,3 +70,5 @@ enc_temp_folder
 !ico_win32.rc
 
 logs
+
+!06_gen_gif/medium_full_480_r5_c128_nondither.gif
