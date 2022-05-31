@@ -14,17 +14,18 @@
 
 ### RTMP
 
-**Real Time Messaging Protocol(RTMP)**, 即时消息传送协议，该协议针对的是Flash Video，即`FLV`。
+**Real Time Messaging Protocol(RTMP)**, 即时消息传送协议，
+Adobe为Flash播放器和服务器之间音视频数据传输开发的私有协议, 该协议针对的是Flash Video，即`FLV`。
 
-推流常用`RTMP`。但是拉流由于浏览器等不再支持`flush`，所以拉流受限。
+推流常用`RTMP`。但是拉流由于浏览器等不再支持`flash`，所以拉流场景应用受限。
 
 ### HLS
 
-**HTTP Live Streaming(HLS)**, 这是 Apple 提出的直播流协议。跨平台性比较好，HTML5可以直接打开播放，移动端兼容性良，就是延迟比较高。
+**HTTP Live Streaming(HLS)**, 是Apple提出的直播流协议。跨平台性比较好，HTML5可以直接打开播放，移动端兼容性良，但延迟比较高。
 
 ### HTTP-FLV
 
-同样针对于`FLV`视频格式，
+同样针对于`FLV`视频格式，通过HTTP协议传输给客户端。
 
 ## 流媒体服务器搭建
 
