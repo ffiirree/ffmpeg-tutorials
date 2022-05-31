@@ -68,3 +68,5 @@ enc_temp_folder
 *.pptx
 
 !ico_win32.rc
+
+logs

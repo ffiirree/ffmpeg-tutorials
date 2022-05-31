@@ -123,12 +123,12 @@ public:
                         break;
                     }
                     else if (ret == AVERROR_EOF) { // fully flushed, exit
-                        LOG(INFO) << "[DECODER THREAD] EOF";
+                        LOG(INFO) << "[DECODER THREAD @ " << std::this_thread::get_id() << "] EOF";
                         running_ = false;
                         break;
                     }
                     else if (ret < 0) { // error, exit
-                        LOG(ERROR) << "[DECODER THREAD] legitimate decoding errors";
+                        LOG(ERROR) << "[DECODER THREAD @ " << std::this_thread::get_id() << "] legitimate decoding errors";
                         running_ = false;
                         break;
                     }
@@ -359,6 +359,8 @@ public:
 
     int create(const std::string& descr)
     {
+        LOG(INFO) << "create filter for: " << descr;
+
         const AVFilter *buffersink = avfilter_get_by_name("buffersink");
         if (!buffersink) {
             LOG(ERROR) << "avfilter_get_by_name(\"buffersink\")";
@@ -435,7 +437,7 @@ public:
 int main(int argc, char* argv[])
 {
     if (argc < 4) {
-        LOG(ERROR) << "complex_filter -i <input-1> -i <input-2> <output>";
+        LOG(ERROR) << "complex_filter -i <input-watermark> -i <input-video> <output>";
         return -1;
     }
 
@@ -471,7 +473,10 @@ int main(int argc, char* argv[])
         filter.create_buffersrc(decoder->filter_args());
     }
 
-    filter.create("[0:v] scale=64:-1:flags=lanczos,vflip [s];[1:v][s]overlay=10:10");
+    const std::string filter_complex = "[0:v] scale=64:-1:flags=lanczos,vflip [s];[1:v][s]overlay=10:10"; 
+    filter.create(filter_complex);
+    LOG(INFO) << fmt::format(R"( -- same as : ffmpeg -i {} -i {} -filter_complex "{}" {})", input_files[0], input_files[1], filter_complex, output_file);
+
     encoder.open(output_file, filter.width(), filter.height(), filter.format(), filter.sample_aspect_ratio(), filter.framerate(), filter.time_base());
 
     AVFrame * frame = av_frame_alloc();

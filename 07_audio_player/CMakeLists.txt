@@ -8,6 +8,6 @@ target_link_libraries(audio_player PRIVATE ${LIBS})
 target_include_directories(audio_player
     PRIVATE
         ${PROJECT_SOURCE_DIR}/3rdparty
-        core
+        ${PROJECT_SOURCE_DIR}/utils
         player
 )

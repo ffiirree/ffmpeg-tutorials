@@ -8,6 +8,6 @@ target_link_libraries(video_player PRIVATE ${LIBS})
 target_include_directories(video_player
     PRIVATE
         ${PROJECT_SOURCE_DIR}/3rdparty
-        core
+        ${PROJECT_SOURCE_DIR}/utils
         player
 )

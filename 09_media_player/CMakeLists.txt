@@ -8,6 +8,6 @@ target_link_libraries(player PRIVATE ${LIBS})
 target_include_directories(player
     PRIVATE
         ${PROJECT_SOURCE_DIR}/3rdparty
-        core
+        ${PROJECT_SOURCE_DIR}/utils
         player
 )

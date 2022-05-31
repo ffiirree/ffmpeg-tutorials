@@ -222,8 +222,6 @@ void MediaDecoder::video_thread_f()
             }
 		}
 
-        first_pts_ = (first_pts_ == AV_NOPTS_VALUE) ? av_gettime_relative() : first_pts_;
-
         if (packet_->stream_index == video_stream_index_) {
             ret = avcodec_send_packet(video_decoder_ctx_, packet_);
             while (ret >= 0) {
@@ -243,6 +241,7 @@ void MediaDecoder::video_thread_f()
                     return;
                 }
 
+				first_pts_ = (first_pts_ == AV_NOPTS_VALUE) ? av_gettime_relative() : first_pts_;
                 decoded_video_frame_->pts = (decoded_video_frame_->pts == AV_NOPTS_VALUE) ?
                                             av_rescale_q(av_gettime_relative() - first_pts_, { 1, AV_TIME_BASE }, fmt_ctx_->streams[packet_->stream_index]->time_base) :
                                             decoded_video_frame_->pts - fmt_ctx_->streams[packet_->stream_index]->start_time;
@@ -260,8 +259,9 @@ void MediaDecoder::video_thread_f()
 
                     int64_t ts = av_gettime_relative() - first_pts_;
 
-                    int64_t pts_us = av_rescale_q(filtered_frame_->pts, fmt_ctx_->streams[packet_->stream_index]->time_base, { 1, AV_TIME_BASE });
-                    int64_t sleep_us = std::min<int64_t>(std::max<int64_t>(0, pts_us - ts), AV_TIME_BASE); // 0 ~ 1s
+                    int64_t pts_us = av_rescale_q(std::max<int64_t>(0, filtered_frame_->pts), fmt_ctx_->streams[packet_->stream_index]->time_base, { 1, AV_TIME_BASE });
+					int64_t duration_us = av_rescale_q(filtered_frame_->pkt_duration, fmt_ctx_->streams[packet_->stream_index]->time_base, { 1, AV_TIME_BASE });
+                    int64_t sleep_us = filtered_frame_->pkt_duration > 0 ? duration_us : pts_us - ts;
 
                     LOG(INFO) << fmt::format("[VIDEO THREAD] pts = {:>6.3f}s, ts = {:>6.3f}s, sleep = {:>4d}ms, frame = {:>4d}, fps = {:>5.2f}",
                                              pts_us / 1000000.0, ts / 1000000.0, sleep_us / 1000,

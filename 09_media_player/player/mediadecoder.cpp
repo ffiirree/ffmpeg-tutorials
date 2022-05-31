@@ -359,7 +359,7 @@ void MediaDecoder::video_thread_f()
                 int64_t pts_us = av_rescale_q(filtered_frame_->pts, fmt_ctx_->streams[video_packet_->stream_index]->time_base, { 1, AV_TIME_BASE });
                 int64_t sleep_us = std::min<int64_t>(std::max<int64_t>(0, pts_us - clock_us()), AV_TIME_BASE);
 
-                LOG(INFO) << fmt::format("[VIDEO THREAD] pts = {:>6.3f}s, clock = {:>6.3f}s, sleep = {:>4d}ms, frame = {:>4d}, fps = {:>5.2f}, ts = {:>6.3f}",
+                LOG(INFO) << fmt::format("[VIDEO THREAD] pts = {:>6.3f}s, clock = {:>6.3f}s, sleep = {:>4d}ms, frame = {:>4d}, fps = {:>5.2f}, ts = {:>6.3f}s",
                     pts_us / 1000000.0, clock_s(), sleep_us / 1000,
                     video_decoder_ctx_->frame_number, video_decoder_ctx_->frame_number / clock_s(),
                     (av_gettime_relative() - first_pts_) / 1000000.0);
@@ -401,7 +401,7 @@ void MediaDecoder::audio_thread_f()
             }
             else if (ret == AVERROR_EOF) { // fully flushed, exit
                 avcodec_flush_buffers(audio_decoder_ctx_);
-                LOG(ERROR) << "[AUDIO THREAD] EOF";
+                LOG(INFO) << "[AUDIO THREAD] EOF";
                 return;
             }
             else if (ret < 0) { // error, exit
@@ -440,7 +440,7 @@ void MediaDecoder::audio_thread_f()
             audio_clock_ = pts_us + frame_duration - buffered_duration;
             audio_clock_ts_ = av_gettime_relative();
 
-            LOG(INFO) << fmt::format("[AUDIO THREAD] pts = {:>6.3f} + {:>7d} - {:>7d}/({:>6d}+{:>6d}), clock = {:>6.3f}, ts = {:>6.3f}",
+            LOG(INFO) << fmt::format("[AUDIO THREAD] pts = {:>6.3f}s + {:>7d} - {:>7d}({:>6d}+{:>6d}) -> clock = {:>6.3f}s, ts = {:>6.3f}s",
                 pts_us / 1000000.0,
                 frame_duration, buffered_duration, buffered_size, ring_buffer.size(), clock_s(),
                 (av_gettime_relative() - first_pts_) / 1000000.0

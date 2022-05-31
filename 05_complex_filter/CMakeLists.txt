@@ -6,5 +6,5 @@ target_link_libraries(complex_filter PRIVATE ${LIBS})
 target_include_directories(complex_filter
     PRIVATE
         ${PROJECT_SOURCE_DIR}/3rdparty
-        ./
+        ${PROJECT_SOURCE_DIR}/utils
 )

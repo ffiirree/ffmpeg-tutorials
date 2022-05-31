@@ -6,6 +6,11 @@ int main(int argc, char *argv[])
 {
     Logger::init(argv);
 
+    if (argc < 2) {
+        LOG(ERROR) << "player <input>";
+        return -1;
+    }
+
     QApplication a(argc, argv);
     QApplication::setQuitOnLastWindowClosed(true);
 
@@ -13,7 +18,7 @@ int main(int argc, char *argv[])
     player.show();
 
     // filepath
-    player.play(R"(../../hevc.mkv)");
+    player.play(argv[1]);
 
     return a.exec();
 }
