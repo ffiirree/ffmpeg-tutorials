@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
     }
 
     // encoder
-    AVCodec *encoder = avcodec_find_encoder_by_name("libx264");
+    AVCodec *encoder = avcodec_find_encoder_by_name("libx265");
     if (!encoder) {
         fprintf(stderr, "encoder: avcodec_find_encoder_by_name()\n");
         return -1;
@@ -101,8 +101,6 @@ int main(int argc, char* argv[])
     }
 
     AVDictionary* encoder_options = nullptr;
-    av_dict_set(&encoder_options, "preset", "ultrafast", AV_DICT_DONT_OVERWRITE);
-    av_dict_set(&encoder_options, "tune", "zerolatency", AV_DICT_DONT_OVERWRITE);
     av_dict_set(&encoder_options, "crf", "23", AV_DICT_DONT_OVERWRITE);
     av_dict_set(&encoder_options, "threads", "auto", AV_DICT_DONT_OVERWRITE);
 
@@ -111,10 +109,11 @@ int main(int argc, char* argv[])
     encoder_ctx->width = decoder_ctx->width;
     encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
     encoder_ctx->pix_fmt = encoder->pix_fmts[0];
-    // time base
-    encoder_ctx->time_base = decoder_fmt_ctx->streams[video_stream_idx]->time_base;
-    encoder_fmt_ctx->streams[0]->time_base = encoder_ctx->time_base;
     encoder_ctx->framerate = av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr);
+
+    // time base
+    encoder_ctx->time_base = av_inv_q(encoder_ctx->framerate);
+    encoder_fmt_ctx->streams[0]->time_base = encoder_ctx->time_base;
 
     if(avcodec_open2(encoder_ctx, encoder, &encoder_options) < 0) {
         fprintf(stderr,"encoder: avcodec_open2()\n");
@@ -160,19 +159,21 @@ int main(int argc, char* argv[])
         fprintf(stderr, "av_image_alloc()\n");
         return -1;
     }
-    int64_t first_pts = AV_NOPTS_VALUE;
+
     printf("encoder: framerate: %d/%d, context timebase: %d/%d, stream timebase: %d/%d\n",
            encoder_ctx->framerate.num, encoder_ctx->framerate.den,
            encoder_ctx->time_base.num, encoder_ctx->time_base.den,
            encoder_fmt_ctx->streams[0]->time_base.num, encoder_fmt_ctx->streams[0]->time_base.den);
 
-    while(av_read_frame(decoder_fmt_ctx, in_packet) >= 0 && decoder_ctx->frame_number < 150) {
+    int64_t first_pts = AV_NOPTS_VALUE;
+    while(av_read_frame(decoder_fmt_ctx, in_packet) >= 0 && decoder_ctx->frame_number < 200) {
         if (in_packet->stream_index != video_stream_idx) {
             continue;
         }
 
         int ret = avcodec_send_packet(decoder_ctx, in_packet);
         while(ret >= 0) {
+            av_frame_unref(decoded_frame);
             ret = avcodec_receive_frame(decoder_ctx, decoded_frame);
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                 break;
@@ -189,35 +190,32 @@ int main(int argc, char* argv[])
             scaled_frame->width = decoded_frame->width;
             scaled_frame->format = encoder_ctx->pix_fmt;
 
+            // manually
             first_pts = first_pts == AV_NOPTS_VALUE ? av_gettime_relative() : first_pts;
             scaled_frame->pts = av_rescale_q(av_gettime_relative() - first_pts, { 1, AV_TIME_BASE }, encoder_ctx->time_base);
 
-            if (ret >= 0) {
-                ret = avcodec_send_frame(encoder_ctx, scaled_frame);
-                while(ret >= 0) {
-                    ret = avcodec_receive_packet(encoder_ctx, out_packet);
-
-                    if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-                        break;
-                    } else if(ret < 0) {
-                        fprintf(stderr, "encoder: avcodec_receive_packet()\n");
-                        return ret;
-                    }
-
-                    out_packet->stream_index = 0;
-                    out_packet->duration = decoded_frame->pkt_duration;
-                    av_packet_rescale_ts(out_packet, encoder_ctx->time_base, encoder_fmt_ctx->streams[0]->time_base);
-
-                    printf(" -- pts: %lld, dts: %lld, duration: %lld\n", out_packet->pts, out_packet->dts, out_packet->duration);
-
-                    if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
-                        fprintf(stderr, "encoder: av_interleaved_write_frame()\n");
-                        return -1;
-                    }
-                }
+            ret = avcodec_send_frame(encoder_ctx, scaled_frame);
+            while(ret >= 0) {
                 av_packet_unref(out_packet);
+                ret = avcodec_receive_packet(encoder_ctx, out_packet);
+                if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                    break;
+                } else if(ret < 0) {
+                    fprintf(stderr, "encoder: avcodec_receive_packet()\n");
+                    return ret;
+                }
+
+                out_packet->stream_index = 0;
+                av_packet_rescale_ts(out_packet, encoder_ctx->time_base, encoder_fmt_ctx->streams[0]->time_base);
+
+                printf(" -- [ENCODING] frame = %d, pts: %lld, dts: %lld, duration: %lld, size = %d\n",
+                       encoder_ctx->frame_number, out_packet->pts, out_packet->dts, out_packet->duration, out_packet->size);
+
+                if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
+                    fprintf(stderr, "encoder: av_interleaved_write_frame()\n");
+                    return -1;
+                }
             }
-            av_frame_unref(decoded_frame);
         }
         av_packet_unref(in_packet);
     }

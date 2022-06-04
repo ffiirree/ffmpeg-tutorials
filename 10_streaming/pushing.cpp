@@ -14,7 +14,7 @@ extern "C" {
 int main(int argc, char* argv[])
 {
     if (argc < 3) {
-        LOG(ERROR) << "transcoding <input_video> <rtmp_name>";
+        LOG(ERROR) << "pushing <input_video> <rtmp_name>";
         return -1;
     }
 

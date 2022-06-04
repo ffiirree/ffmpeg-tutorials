@@ -1,10 +1,6 @@
 extern "C" {
 #include <libavutil/avutil.h>
-#include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libavutil/timestamp.h>
-#include <libavdevice/avdevice.h>
-#include <libavutil/opt.h>
 }
 #include <map>
 

@@ -3,7 +3,6 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/timestamp.h>
-#include <libavdevice/avdevice.h>
 #include <libavutil/opt.h>
 }
 
@@ -32,8 +31,6 @@ int main(int argc, char* argv[])
         fprintf(stderr, "avformat_find_stream_info()\n");
         return -1;
     }
-
-    av_dump_format(decoder_fmt_ctx, 0, in_filename, 0);
 
     int video_stream_idx = av_find_best_stream(decoder_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     if (video_stream_idx < 0) {
@@ -65,6 +62,14 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    av_dump_format(decoder_fmt_ctx, 0, in_filename, 0);
+    printf("[ INPUT] %dx%d, fps: %d/%d, tbr: %d/%d, tbc: %d/%d, tbn: %d/%d\n",
+           decoder_ctx->width, decoder_ctx->height,
+           decoder_fmt_ctx->streams[video_stream_idx]->avg_frame_rate.num, decoder_fmt_ctx->streams[video_stream_idx]->avg_frame_rate.den,
+           decoder_fmt_ctx->streams[video_stream_idx]->r_frame_rate.num, decoder_fmt_ctx->streams[video_stream_idx]->r_frame_rate.den,
+           decoder_ctx->time_base.num, decoder_ctx->time_base.den,
+           decoder_fmt_ctx->streams[video_stream_idx]->time_base.num, decoder_fmt_ctx->streams[video_stream_idx]->time_base.den);
+
     //
     // output
     //
@@ -93,19 +98,20 @@ int main(int argc, char* argv[])
     }
 
     AVDictionary* encoder_options = nullptr;
-    av_dict_set(&encoder_options, "preset", "ultrafast", AV_DICT_DONT_OVERWRITE);
-    av_dict_set(&encoder_options, "tune", "zerolatency", AV_DICT_DONT_OVERWRITE);
     av_dict_set(&encoder_options, "crf", "23", AV_DICT_DONT_OVERWRITE);
     av_dict_set(&encoder_options, "threads", "auto", AV_DICT_DONT_OVERWRITE);
 
     // encoder codec params
     encoder_ctx->height = decoder_ctx->height;
     encoder_ctx->width = decoder_ctx->width;
+    encoder_ctx->pix_fmt = decoder_ctx->pix_fmt;
+
     encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
-    encoder_ctx->pix_fmt = encoder->pix_fmts[0];
+    encoder_ctx->framerate = av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr);
+    
     // time base
-    encoder_ctx->time_base = av_inv_q(av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr));
-    encoder_fmt_ctx->streams[0]->time_base = encoder_ctx->time_base;
+    encoder_ctx->time_base = av_inv_q(encoder_ctx->framerate);
+    encoder_fmt_ctx->streams[0]->time_base = decoder_fmt_ctx->streams[video_stream_idx]->time_base;
 
     if(avcodec_open2(encoder_ctx, encoder, &encoder_options) < 0) {
         fprintf(stderr,"encoder: avcodec_open2()\n");
@@ -130,6 +136,11 @@ int main(int argc, char* argv[])
     }
 
     av_dump_format(encoder_fmt_ctx, 0, out_filename, 1);
+    printf("[OUTPUT] %dx%d, framerate: %d/%d, tbc: %d/%d, tbn: %d/%d\n",
+           encoder_ctx->width, encoder_ctx->height,
+           encoder_ctx->framerate.num, encoder_ctx->framerate.den,
+           encoder_ctx->time_base.num, encoder_ctx->time_base.den,
+           encoder_fmt_ctx->streams[0]->time_base.num, encoder_fmt_ctx->streams[0]->time_base.den);
 
     AVPacket * in_packet = av_packet_alloc();
     AVPacket * out_packet = av_packet_alloc();
@@ -141,6 +152,7 @@ int main(int argc, char* argv[])
 
         int ret = avcodec_send_packet(decoder_ctx, in_packet);
         while(ret >= 0) {
+            av_frame_unref(in_frame);
             ret = avcodec_receive_frame(decoder_ctx, in_frame);
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                 break;
@@ -149,29 +161,29 @@ int main(int argc, char* argv[])
                 return ret;
             }
 
-            if (ret >= 0) {
-                ret = avcodec_send_frame(encoder_ctx, in_frame);
-                while(ret >= 0) {
-                    ret = avcodec_receive_packet(encoder_ctx, out_packet);
+            // clear
+            in_frame->pict_type = AV_PICTURE_TYPE_NONE;
 
-                    if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-                        break;
-                    } else if(ret < 0) {
-                        fprintf(stderr, "encoder: avcodec_receive_packet()\n");
-                        return ret;
-                    }
-
-                    out_packet->stream_index = 0;
-                    av_packet_rescale_ts(out_packet, decoder_fmt_ctx->streams[video_stream_idx]->time_base, encoder_fmt_ctx->streams[0]->time_base);
-
-                    if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
-                        fprintf(stderr, "encoder: av_interleaved_write_frame()\n");
-                        return -1;
-                    }
-                }
+            ret = avcodec_send_frame(encoder_ctx, in_frame);
+            while(ret >= 0) {
                 av_packet_unref(out_packet);
+                ret = avcodec_receive_packet(encoder_ctx, out_packet);
+                if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                    break;
+                } else if(ret < 0) {
+                    fprintf(stderr, "encoder: avcodec_receive_packet()\n");
+                    return ret;
+                }
+
+                out_packet->stream_index = 0;
+                av_packet_rescale_ts(out_packet, decoder_fmt_ctx->streams[video_stream_idx]->time_base, encoder_fmt_ctx->streams[0]->time_base);
+                printf(" -- [ENCODING] frame = %d, pts = %lld, dts = %lld, duration = %lld\n", encoder_ctx->frame_number, out_packet->pts, out_packet->dts, out_packet->duration);
+
+                if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
+                    fprintf(stderr, "encoder: av_interleaved_write_frame()\n");
+                    return -1;
+                }
             }
-            av_frame_unref(in_frame);
         }
         av_packet_unref(in_packet);
     }

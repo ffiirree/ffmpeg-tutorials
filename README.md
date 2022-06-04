@@ -58,7 +58,7 @@ git submodule update
 ## Examples
 
 - [x] [remuxing](/01_remuxing/README.md)
-- [ ] [transcoding](/02_trancoding/README.md)
+- [ ] [transcoding](/02_transcoding/README.md)
 - [x] [recording camera / screen](/03_recording/README.md)
 - [ ] [simple filter](/04_simple_filters/README.md)
 - [ ] [complex filter](/05_complex_filter/README.md)

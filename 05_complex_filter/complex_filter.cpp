@@ -418,12 +418,12 @@ public:
         return 0;
     }
 
-    AVRational time_base() { return av_buffersink_get_time_base(buffersink_ctx_); }
-    AVRational sample_aspect_ratio() { return av_buffersink_get_sample_aspect_ratio(buffersink_ctx_); }
-    int height() { return av_buffersink_get_h(buffersink_ctx_); }
-    int width() { return av_buffersink_get_w(buffersink_ctx_); }
-    AVRational framerate() { return av_buffersink_get_frame_rate(buffersink_ctx_); }
-    AVPixelFormat format() { return (AVPixelFormat)av_buffersink_get_format(buffersink_ctx_); }
+    AVRational time_base() const { return av_buffersink_get_time_base(buffersink_ctx_); }
+    AVRational sample_aspect_ratio() const { return av_buffersink_get_sample_aspect_ratio(buffersink_ctx_); }
+    int height() const { return av_buffersink_get_h(buffersink_ctx_); }
+    int width() const { return av_buffersink_get_w(buffersink_ctx_); }
+    AVRational framerate() const { return av_buffersink_get_frame_rate(buffersink_ctx_); }
+    AVPixelFormat format() const { return (AVPixelFormat)av_buffersink_get_format(buffersink_ctx_); }
 
     //private:
     std::atomic<bool> running_{false};

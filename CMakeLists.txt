@@ -57,10 +57,11 @@ list(
 function(create_exe name source_file)
     add_executable(${name} ${source_file})
     target_link_libraries(${name} PRIVATE ${LIBS})
+    target_include_directories(${name} PRIVATE 3rdparty utils)
 endfunction(create_exe)
 
 create_exe(remuxing 01_remuxing/remuxing.cpp)
-create_exe(trancoding 02_trancoding/transcoding.cpp)
+create_exe(transcoding 02_transcoding/transcoding.cpp)
 create_exe(recording 03_recording/recording.cpp)
 create_exe(filter 04_simple_filter/filter.cpp)
 
