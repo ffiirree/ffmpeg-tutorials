@@ -3,8 +3,6 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/time.h>
-#include <libavdevice/avdevice.h>
-#include <libavutil/opt.h>
 }
 
 #include "logging.h"
@@ -13,6 +11,8 @@ extern "C" {
 
 int main(int argc, char* argv[])
 {
+    Logger::init(argv);
+
     if (argc < 3) {
         LOG(ERROR) << "pushing <input_video> <rtmp_name>";
         return -1;
@@ -27,8 +27,6 @@ int main(int argc, char* argv[])
     CHECK(avformat_open_input(&decoder_fmt_ctx, in_filename, nullptr, nullptr) >= 0);
     CHECK(avformat_find_stream_info(decoder_fmt_ctx, nullptr) >= 0);
 
-    av_dump_format(decoder_fmt_ctx, 0, in_filename, 0);
-
     int video_stream_idx = av_find_best_stream(decoder_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     CHECK(video_stream_idx >= 0);
 
@@ -42,6 +40,8 @@ int main(int argc, char* argv[])
 
     CHECK(avcodec_parameters_to_context(decoder_ctx, decoder_fmt_ctx->streams[video_stream_idx]->codecpar) >= 0);
     CHECK(avcodec_open2(decoder_ctx, decoder, nullptr) >= 0);
+
+    av_dump_format(decoder_fmt_ctx, 0, in_filename, 0);
 
     //
     // output
@@ -59,8 +59,6 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(encoder_ctx);
 
     AVDictionary* encoder_options = nullptr;
-    av_dict_set(&encoder_options, "preset", "ultrafast", AV_DICT_DONT_OVERWRITE);
-    av_dict_set(&encoder_options, "tune", "zerolatency", AV_DICT_DONT_OVERWRITE);
     av_dict_set(&encoder_options, "crf", "23", AV_DICT_DONT_OVERWRITE);
     av_dict_set(&encoder_options, "threads", "auto", AV_DICT_DONT_OVERWRITE);
     defer(av_dict_free(&encoder_options));
@@ -68,14 +66,15 @@ int main(int argc, char* argv[])
     // encoder codec params
     encoder_ctx->height = decoder_ctx->height;
     encoder_ctx->width = decoder_ctx->width;
+    encoder_ctx->pix_fmt = decoder_ctx->pix_fmt;
     encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
-    encoder_ctx->pix_fmt = encoder->pix_fmts[0];
+    encoder_ctx->framerate = av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr);
+    
     // time base
-    encoder_ctx->time_base = av_inv_q(av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr));
+    encoder_ctx->time_base = av_inv_q(encoder_ctx->framerate);
     encoder_fmt_ctx->streams[0]->time_base = encoder_ctx->time_base;
 
     CHECK(avcodec_open2(encoder_ctx, encoder, &encoder_options) >= 0);
-
     CHECK(avcodec_parameters_from_context(encoder_fmt_ctx->streams[0]->codecpar, encoder_ctx) >= 0);
 
     if (!(encoder_fmt_ctx->oformat->flags & AVFMT_NOFILE)) {
@@ -107,46 +106,47 @@ int main(int argc, char* argv[])
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                 break;
             } else if (ret < 0) {
-                LOG(INFO) << "encoder: avcodec_receive_frame()";
+                LOG(ERROR) << "[PUSHING] avcodec_receive_frame()";
                 return ret;
             }
 
-            if (ret >= 0) {
-                ret = avcodec_send_frame(encoder_ctx, in_frame);
-                while(ret >= 0) {
-                    av_packet_unref(out_packet);
-                    ret = avcodec_receive_packet(encoder_ctx, out_packet);
+            in_frame->pict_type = AV_PICTURE_TYPE_NONE;
 
-                    if(ret == AVERROR(EAGAIN)) {
-                        break;
-                    } else if(ret == AVERROR_EOF) {
-                        LOG(INFO) << "[PUSHING] EOF";
-                        break;
-                    } else if(ret < 0) {
-                        LOG(ERROR) << "encoder: avcodec_receive_packet()";
-                        return ret;
-                    }
+            // sleep @{
+            first_pts = first_pts == AV_NOPTS_VALUE ? av_gettime_relative() : first_pts;
 
-                    first_pts = first_pts == AV_NOPTS_VALUE ? av_gettime_relative() : first_pts;
-                    out_packet->stream_index = 0;
-                    av_packet_rescale_ts(out_packet, decoder_fmt_ctx->streams[video_stream_idx]->time_base, encoder_fmt_ctx->streams[0]->time_base);
+            int64_t ts = av_gettime_relative() - first_pts;
 
-                    int64_t ts = av_gettime_relative() - first_pts;
+            int64_t pts_us = av_rescale_q(in_frame->pts, encoder_fmt_ctx->streams[0]->time_base, { 1, AV_TIME_BASE });
+            int64_t sleep_us = std::max<int64_t>(0, pts_us - ts);
 
-                    int64_t pts_us = av_rescale_q(std::max<int64_t>(0, out_packet->pts), encoder_fmt_ctx->streams[0]->time_base, { 1, AV_TIME_BASE });
-					int64_t duration_us = av_rescale_q(out_packet->duration, encoder_fmt_ctx->streams[0]->time_base, { 1, AV_TIME_BASE });
-                    int64_t sleep_us = out_packet->duration > 0 ? duration_us : std::max<int64_t>(0, pts_us - ts);
+            LOG(INFO) << fmt::format("[PUSHING] pts = {:>6.3f}s, ts = {:>6.3f}s, sleep = {:>4d}ms, frame = {:>5d}, fps = {:>5.2f}",
+                                     pts_us / 1000000.0, ts / 1000000.0, sleep_us / 1000,
+                                     encoder_ctx->frame_number, encoder_ctx->frame_number / (ts / 1000000.0));
+            av_usleep(sleep_us);
+            // @}
 
-                    LOG(INFO) << fmt::format("[PUSHING] pts = {:>6.3f}s, ts = {:>6.3f}s, sleep = {:>4d}ms, frame = {:>4d}, fps = {:>5.2f}",
-                                             pts_us / 1000000.0, ts / 1000000.0, sleep_us / 1000,
-                                             encoder_ctx->frame_number, encoder_ctx->frame_number / (ts / 1000000.0));
+            ret = avcodec_send_frame(encoder_ctx, in_frame);
+            while(ret >= 0) {
+                av_packet_unref(out_packet);
+                ret = avcodec_receive_packet(encoder_ctx, out_packet);
 
-                    av_usleep(sleep_us);
+                if(ret == AVERROR(EAGAIN)) {
+                    break;
+                } else if(ret == AVERROR_EOF) {
+                    LOG(INFO) << "[PUSHING] EOF";
+                    break;
+                } else if(ret < 0) {
+                    LOG(ERROR) << "[PUSHING] avcodec_receive_packet()";
+                    return ret;
+                }
 
-                    if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
-                        LOG(ERROR) <<"encoder: av_interleaved_write_frame()";
-                        return -1;
-                    }
+                out_packet->stream_index = 0;
+                av_packet_rescale_ts(out_packet, decoder_fmt_ctx->streams[video_stream_idx]->time_base, encoder_fmt_ctx->streams[0]->time_base);
+
+                if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
+                    LOG(ERROR) <<"[PUSHING] av_interleaved_write_frame()";
+                    return -1;
                 }
             }
         }

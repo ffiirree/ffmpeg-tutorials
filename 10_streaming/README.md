@@ -1,6 +1,6 @@
 # Streaming
 
-视频直播已经非常普遍了，推流和拉流是两个基本的技术步骤。
+视频直播已经非常普遍了，推流和拉流是两个基本的技术步骤。对FFmpeg来说，`推流`/`拉流`分别和`写文件`/`读文件`没有太大不同，只是要针对性的处理一些细节。
 
 ## 推流
 
@@ -39,6 +39,9 @@ Adobe为Flash播放器和服务器之间音视频数据传输开发的私有协�
 
 ```bash
 sudo apt install nginx libnginx-mod-rtmp
+
+# WSL2启动nginx(Ubuntu默认安装后即启动)
+sudo service nginx start
 ```
 
 使用`sudo systemctl status nginx`或浏览器打开`localhost`查看nginx是否运行成功。
@@ -47,12 +50,12 @@ sudo apt install nginx libnginx-mod-rtmp
 
 下载`nginx`和`rtmp`对应的包，安装。
 
-
 ### 配置
 
 这里仅做`RTMP`的配置，`HLS`等协议不再介绍，这不是要介绍的重点。
 
 打开nginx配置文件
+
 ```bash
 sudo vim /etc/nginx/nginx.conf
 ```
@@ -73,7 +76,8 @@ rtmp {
     }
 }
 ```
-测试并重启nginx
+
+测试配置是否正确并重启nginx
 
 ```bash
 sudo nginx -t
@@ -94,7 +98,6 @@ ffplay rtmp://127.0.0.1:1935/live/test
 
 ![streaming](/images/streaming.png)
 
-
 ## Hard wary
 
 ### 推流
@@ -102,10 +105,18 @@ ffplay rtmp://127.0.0.1:1935/live/test
 推流过程和转码过程是几乎相同的(如果视频源的编码和封装格式符合条件，可以直接解封装后直接发送，不需要转码等步骤)，这里仅说明几处不同的地方。
 
 创建输出`AVForamtContex`时，选择`flv`格式
+
 ```c
 CHECK(avformat_alloc_output_context2(&encoder_fmt_ctx, nullptr, "flv", nullptr) >= 0);
 ```
+
 其次，如果是推送视频文件(非摄像头等)，推流前要使用`av_usleep(sleep_us)`控制推流速度，否则会不间断的推送帧。
+
+编译并推理测试：
+
+```bash
+pushing xxx.mkv rtmp://127.0.0.1:1935/live/test
+```
 
 ### 拉流
 
