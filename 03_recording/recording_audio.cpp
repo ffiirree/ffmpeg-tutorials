@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
     if (argc < 4) {
         LOG(ERROR) << "recording_audio <format(dshow)> <input(audio=MICROPHONE)> <output>";
-        LOG(ERROR) << "\trecording_audio dshow audio=audio\"MICROPHONE\" out.mp3";
+        LOG(ERROR) << "\trecording_audio dshow audio=audio\"MICROPHONE\" out.mp4";
         return -1;
     }
 
@@ -96,6 +96,7 @@ int main(int argc, char* argv[])
                                              0, nullptr);
     CHECK_NOTNULL(swr_ctx);
     CHECK(swr_init(swr_ctx) >= 0);
+    defer(swr_free(&swr_ctx));
 
     av_dump_format(encoder_fmt_ctx, 0, out_filename, 1);
     LOG(INFO) << fmt::format("[OUTPUT] codec_name = {}, sample_rate = {}Hz, channels = {}, sample_fmt = {}, frame_size = {}, tbc = {}/{}, tbn = {}/{}",
@@ -156,7 +157,6 @@ int main(int argc, char* argv[])
                                   (const uint8_t **)decoded_frame->data,  decoded_frame->nb_samples) >= 0);
 
                 CHECK(av_audio_fifo_write(audio_buffer, (void **)resampled_frame->data, resampled_frame->nb_samples) >= decoded_frame->nb_samples);
-
             }
         }
 
@@ -178,12 +178,10 @@ int main(int argc, char* argv[])
                     return ret;
                 }
 
-                out_packet->stream_index = 0;
-                av_packet_rescale_ts(out_packet, encoder_ctx->time_base, encoder_fmt_ctx->streams[0]->time_base);
-
                 LOG(INFO) << fmt::format("[RECORDING] packet = {:>5d}, pts = {:>8d}, size = {:>6d}",
                                          encoder_ctx->frame_number, out_packet->pts,  out_packet->size);
 
+                out_packet->stream_index = 0;
                 if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
                     LOG(ERROR) << "[RECORDING] av_interleaved_write_frame()";
                     return -1;

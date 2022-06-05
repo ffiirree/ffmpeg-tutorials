@@ -27,7 +27,7 @@ ffmpeg -f v4l2 -i /dev/video0 -c:v libx264 camera.mkv
 ffmpeg -framerate 25 -video_size 720x360 -f x11grab -i :0.0+100,200 -c:v libx264 screen.mp4
 ```
 
-## Hard way
+## 视频录制
 
 ### 打开输入设备
 
@@ -56,12 +56,10 @@ avformat_open_input(&decoder_fmt_ctx, input, av_find_input_format(input_format),
     );
 
     AVFrame * scaled_frame = av_frame_alloc();
-    if(av_image_alloc(scaled_frame->data, scaled_frame->linesize,
-                      encoder_ctx->width, encoder_ctx->height,
-                      encoder_ctx->pix_fmt, 8) < 0) {
-        fprintf(stderr, "av_image_alloc()\n");
-        return -1;
-    }
+    scaled_frame->height = encoder_ctx->height;
+    scaled_frame->width = encoder_ctx->width;
+    scaled_frame->format = encoder_ctx->pix_fmt;
+    av_frame_get_buffer(scaled_frame, 0);
 ```
 
 缩放和转换调用：
@@ -73,8 +71,6 @@ sws_scale(
     0, decoder_ctx->height,
     scaled_frame->data, scaled_frame->linesize);
 ```
-
-注意要对转换后的帧设定`height`和`width`等基础信息。
 
 > 缩放和格式转换也可以用filter实现，而且filter会自动进行格式协商，见后续filter等示例。
 
@@ -97,14 +93,14 @@ typedef struct AVRational{
 在ffmpeg中，帧率`framerate`和时间基数`time_base`都是用`AVRational`表示的。
 
 - `framerate`: 帧率，例如24帧表示为`AVRational{24, 1}`
-- `time_base`: 时间戳单位(或者理解为时间片，是对1s的缩放)，ffmpeg中的时间单位并不是固定的1s/1ms/1us等，而是`解码器(AVCodecContext)`和`每条视频流/音频流(AVStream)`可以设定各自的`time_base`。如果`time_base`是1ms，则为`AVRational{1, 1000}`，即1s的1000分之一。
-  - `AVCodecContext.time_base` gives the exact fps. If ticks_per_frame is 2, downsize the time_base with 1/2. For example, if AVCodecContext.time_base (1, 60) and ticks_per_frame is 1, the fps is 60. If ticks_per_frame is 2, fps is 30. 也就是`AVCodecContext.time_base`和`fps`是相关的。 `fps`固定时，`AVCodecContex.time_base`应该为`1/framerate`；`fps`不固定时，那就没有`fps`这个概念了(或者说可以认为是`1/AVCodecContex.time_base`)
-  - The time_base for AVStream is only for time unit in the methods in AVStream, such as getting the time of one frame, or the .start variable. 也就是`AVStream.time_base`只是一个精确的时间单位就可以了，而且编码时`AVStream.time_base`在手动设定后，可能会被ffmpeg根据编码格式重新设定。
+- `time_base`: 时间戳单位(或者理解为时间片，是对单位`s`的缩放)，ffmpeg中的时间单位并不是固定的1s/1ms/1us等，而是`解码器(AVCodecContext)`和`每条视频流/音频流(AVStream)`可以设定各自的`time_base`。如果`time_base`是1ms，则为`AVRational{1, 1000}`，即1s的1000分之一。
+  - `AVCodecContext.time_base`: gives the exact fps. If ticks_per_frame is 2, downsize the time_base with 1/2. For example, if AVCodecContext.time_base (1, 60) and ticks_per_frame is 1, the fps is 60. If ticks_per_frame is 2, fps is 30. 也就是`AVCodecContext.time_base`和`fps`是相关的。 `fps`固定时，`AVCodecContex.time_base`应该为`1/framerate`；`fps`不固定时，那就没有`fps`这个概念了(或者说可以认为是`1/AVCodecContex.time_base`)
+  - `AVStream.time_base`: The time_base for AVStream is only for time unit in the methods in AVStream, such as getting the time of one frame, or the .start variable. 也就是`AVStream.time_base`只是一个精确的时间单位就可以了，而且编码时`AVStream.time_base`在手动设定后，可能会被ffmpeg根据编码格式重新设定。
   - 关于为什么要有`AVCodecContext.time_base`和`AVStream.time_base`两种: Generaly coder time base is inverse Frame Rate, so we can increment PTS simple by 1 for next frame, but Stream time base can depend on some format/codec specifications. Packets PTS/DTS must be in Stream time-base units before writing so rescaling between coder and stream time bases is required.
 - `pts`: `presentation timestamp`，也就是`显示时间`，用来指定该帧播放的时间。`pts`的时间单位就是`time_base`，也就是从视频开始到这一帧经过了多少个`time_base`。
   - `AVPacket.pts` 的单位必须是对应流的`AVStream.time_base`
-  - `AVFrame.pts` 的单位则不确定，是 解码/编码 时输入的 packet 或 frame 对应的time_base (TODO: 这个存疑)
-- `dts`: `decompression timestamp`，即`解码时间`。由于有些编码格式由预测帧等帧的存在，帧的解码顺序和编码顺序不同，`pts >= dts`。
+  - `AVFrame.pts` 的单位则不确定，是 解码/编码 时输入的 packet 或 frame 对应的time_base
+- `dts`: `decompression timestamp`，即`解码时间`。由于有些编码格式有`预测帧`等类型的帧存在，帧的编解码顺序不同，`pts >= dts`。编码后写入文件时，帧的`dts`应该为单调递增。
 - `duration`: 两帧之间的间隔。
 - `AVFormatContext.r_frame_rate`: libavformats猜的framerate
 
@@ -142,6 +138,23 @@ packet->pts -= decoder_fmt_ctx->streams[video_stream_idx]->start_time;
 `pts`要在编码前设定好，这样编码器可以为生成的`packet`设定对应的`pts`和`dts`。因为有不同类型的帧，所以编码器输出的`packet`不是按照`pts`顺序
 输出，而是按照`dts`输出的，且`dts`在写入文件时，必须时单调递增的(这里可以添加一个是否单调递增的检查，因为一般写入前要进行时间单位的转换，
 如果时间是被截断的，`dts`可能会重复造成写入失败)。
+
+## 音频录制
+
+音频基础可以先看一下[数字音频基础­­­­­－从PCM说起](https://zhuanlan.zhihu.com/p/212318683)类似的博客。音频处理过程中，以下参数较为常用:
+
+- `sample_rate`: 采样率
+- `channels`: 通道数
+- `channel_layout`: 通道布局
+- `sample_fmt`: 采样格式
+
+音频不同于视频，音频是连续的采样(离散但连续的等时间间隔采样)，对时间较为敏感(人对声音敏感)，也就是采样率确定的情况下，将`time_base`设定为
+采样率的倒数，那么计算的`pts`均为连续的整数，且非常好计算。
+
+```c
+resampled_frame->pts = first_pts;
+first_pts += resampled_frame->nb_samples;
+```
 
 ## References
 

@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(encoder_ctx);
 
     AVDictionary* encoder_options = nullptr;
-    av_dict_set(&encoder_options, "crf", "20", AV_DICT_DONT_OVERWRITE);
+    av_dict_set(&encoder_options, "crf", "23", AV_DICT_DONT_OVERWRITE);
     av_dict_set(&encoder_options, "threads", "auto", AV_DICT_DONT_OVERWRITE);
 
     // encoder codec params
@@ -104,9 +104,11 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(sws_ctx);
 
     AVFrame * scaled_frame = av_frame_alloc();
-    CHECK(av_image_alloc(scaled_frame->data, scaled_frame->linesize,
-                         encoder_ctx->width, encoder_ctx->height,
-                         encoder_ctx->pix_fmt, 8) >= 0);
+    scaled_frame->height = encoder_ctx->height;
+    scaled_frame->width = encoder_ctx->width;
+    scaled_frame->format = encoder_ctx->pix_fmt;
+    av_frame_get_buffer(scaled_frame, 0);
+    defer(av_frame_free(&scaled_frame));
     // @}
 
     AVPacket * in_packet = av_packet_alloc();
@@ -134,9 +136,6 @@ int main(int argc, char* argv[])
                       static_cast<const uint8_t *const *>(decoded_frame->data), decoded_frame->linesize,
                       0, decoder_ctx->height,
                       scaled_frame->data, scaled_frame->linesize);
-            scaled_frame->height = decoded_frame->height;
-            scaled_frame->width = decoded_frame->width;
-            scaled_frame->format = encoder_ctx->pix_fmt;
 
             // manually
             first_pts = first_pts == AV_NOPTS_VALUE ? av_gettime_relative() : first_pts;
@@ -173,7 +172,6 @@ int main(int argc, char* argv[])
     av_packet_free(&in_packet);
     av_packet_free(&out_packet);
     av_frame_free(&decoded_frame);
-    av_frame_free(&scaled_frame);
 
     av_write_trailer(encoder_fmt_ctx);
     if (encoder_fmt_ctx && !(encoder_fmt_ctx->oformat->flags & AVFMT_NOFILE))
