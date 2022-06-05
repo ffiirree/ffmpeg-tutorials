@@ -63,6 +63,7 @@ endfunction(create_exe)
 create_exe(remuxing 01_remuxing/remuxing.cpp)
 create_exe(transcoding 02_transcoding/transcoding.cpp)
 create_exe(recording 03_recording/recording.cpp)
+create_exe(recording_audio 03_recording/recording_audio.cpp)
 create_exe(filter 04_simple_filter/filter.cpp)
 
 add_subdirectory(05_complex_filter)

@@ -108,15 +108,18 @@ typedef struct AVRational{
 - `duration`: 两帧之间的间隔。
 - `AVFormatContext.r_frame_rate`: libavformats猜的framerate
 
-  
 ### 设定`time_base`和`pts`
 
 编码时的`time_base`需要手动设定：
 
 ```c
-// 编码器和每条视频都有time_base，这里设定为相同
-encoder_ctx->time_base = decoder_fmt_ctx->streams[video_stream_idx]->time_base;
-// 视频流的time_base要在调用avformat_write_header()之前设定(或者不设定)，且调用`avformat_write_header()`后，流的time_base会被覆写，因此不一定是设定时的值
+// 一般来说，转码或者录屏的编码器使用和输入源相同的帧率，或者设定为指定帧率也可以
+encoder_ctx->framerate = av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr);
+// Context的time_base一般设置为帧率的倒数即可，这样后一帧的pts就是当前帧pts+1，这样都是整数。
+// 此外设置和输入源解码器context相同的time_base或设置为指定的time_base都行
+encoder_ctx->time_base = av_inv_q(encoder_ctx->framerate);
+// 视频流的time_base要在调用avformat_write_header()之前设定(或者不设定)，
+// 且调用`avformat_write_header()`后，流的time_base会被覆写，因此不一定是这里设定的值
 encoder_fmt_ctx->streams[0]->time_base = encoder_ctx->time_base;
 ```
 
@@ -130,8 +133,20 @@ first_pts = first_pts == AV_NOPTS_VALUE ? av_gettime_relative() : first_pts;
 scaled_frame->pts = av_rescale_q(av_gettime_relative() - first_pts, { 1, AV_TIME_BASE }, encoder_fmt_ctx->streams[0]->time_base);
 ```
 
+此外，也可以使用摄像头等输入源的`pts`，不过摄像头的pts一般不是从0开始的，要减去视频流的起始时间，在读取到`packet`时：
+
+```c
+packet->pts -= decoder_fmt_ctx->streams[video_stream_idx]->start_time;
+```
+
+`pts`要在编码前设定好，这样编码器可以为生成的`packet`设定对应的`pts`和`dts`。因为有不同类型的帧，所以编码器输出的`packet`不是按照`pts`顺序
+输出，而是按照`dts`输出的，且`dts`在写入文件时，必须时单调递增的(这里可以添加一个是否单调递增的检查，因为一般写入前要进行时间单位的转换，
+如果时间是被截断的，`dts`可能会重复造成写入失败)。
+
 ## References
 
 - [[Ffmpeg-devel] Frame rates and time_base](http://ffmpeg.org/pipermail/ffmpeg-devel/2005-May/003079.html)
 - [ffmpeg time unit explanation and av_seek_frame method](https://stackoverflow.com/questions/12234949/ffmpeg-time-unit-explanation-and-av-seek-frame-method)
 - [[Libav-user] Helo in understanding PTS and DTS](https://ffmpeg.org/pipermail/libav-user/2012-November/003207.html)
+- [数字音频基础­­­­­－从PCM说起](https://zhuanlan.zhihu.com/p/212318683)
+- [transcode_aac_8c-example](http://ffmpeg.org/doxygen/trunk/transcode_aac_8c-example.html)

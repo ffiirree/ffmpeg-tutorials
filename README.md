@@ -59,7 +59,7 @@ git submodule update
 
 - [x] [remuxing](/01_remuxing/README.md)
 - [ ] [transcoding](/02_transcoding/README.md)
-- [x] [recording camera / screen](/03_recording/README.md)
+- [x] [recording camera / screen / microphone](/03_recording/README.md)
 - [ ] [simple filter](/04_simple_filters/README.md)
 - [ ] [complex filter](/05_complex_filter/README.md)
 - [x] [generating high quality GIF](/06_gen_gif/README.md)

@@ -5,8 +5,8 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
-#include "logging.h"
 #include "utils.h"
+#include "logging.h"
 #include "fmt/format.h"
 
 int main(int argc, char* argv[])
@@ -50,7 +50,6 @@ int main(int argc, char* argv[])
     CHECK(avformat_alloc_output_context2(&encoder_fmt_ctx, nullptr, "flv", nullptr) >= 0);
     CHECK_NOTNULL(avformat_new_stream(encoder_fmt_ctx, nullptr));
 
-
     // encoder
     AVCodec *encoder = avcodec_find_encoder_by_name("libx264");
     CHECK_NOTNULL(encoder);
@@ -69,7 +68,7 @@ int main(int argc, char* argv[])
     encoder_ctx->pix_fmt = decoder_ctx->pix_fmt;
     encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
     encoder_ctx->framerate = av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr);
-    
+
     // time base
     encoder_ctx->time_base = av_inv_q(encoder_ctx->framerate);
     encoder_fmt_ctx->streams[0]->time_base = encoder_ctx->time_base;
@@ -159,5 +158,5 @@ int main(int argc, char* argv[])
     avcodec_free_context(&decoder_ctx);
     avcodec_free_context(&encoder_ctx);
 
-	return 0;
+    return 0;
 }
