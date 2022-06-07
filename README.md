@@ -67,6 +67,7 @@ git submodule update
 - [ ] [video player with Qt](/08_video_player/README.md)
 - [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md)
 - [x] [RTMP Streaming](/10_streaming/README.md)
+- [ ] [audio endpoints recording by WASAPI](/11_audio_wasapi)
 
 
 ## References
