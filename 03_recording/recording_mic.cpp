@@ -17,8 +17,10 @@ int main(int argc, char* argv[])
     Logger::init(argv);
 
     if (argc < 4) {
-        LOG(ERROR) << "recording_mic <format(dshow)> <input(audio=MICROPHONE)> <output>";
-        LOG(ERROR) << "\trecording_mic dshow audio=audio\"MICROPHONE\" out.mp4";
+        LOG(ERROR) << "recording_mic <format(dshow/alsa/pulse)> <input(audio=MICROPHONE/default)> <output>";
+        LOG(ERROR) << "\t[Windows] recording_mic dshow audio=audio\"MICROPHONE\" out.mp4";
+        LOG(ERROR) << "\t[Ubuntu ] recording_mic alsa default out.mp4";
+        LOG(ERROR) << "\t[Ubuntu ] recording_mic pulse default out.mp4";;
         return -1;
     }
 
