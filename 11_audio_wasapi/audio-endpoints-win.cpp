@@ -12,7 +12,7 @@ int enum_audio_endpoints()
     IPropertyStore *props = nullptr;
     UINT count = 0;
 
-    RETURN_ON_ERROR(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
+    RETURN_ON_ERROR(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
     defer(CoUninitialize());
 
     RETURN_ON_ERROR(CoCreateInstance(
@@ -68,7 +68,7 @@ int default_audio_endpoint()
     LPWSTR id = nullptr;
     IPropertyStore *props = nullptr;
 
-    RETURN_ON_ERROR(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
+    RETURN_ON_ERROR(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
     defer(CoUninitialize());
 
     RETURN_ON_ERROR(CoCreateInstance(

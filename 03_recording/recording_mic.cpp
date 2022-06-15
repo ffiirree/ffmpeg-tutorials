@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
     auto alloc_frame_buffer_for_encoding = [=](AVFrame * frame, int size) {
         av_frame_unref(frame);
 
-        resampled_frame->nb_samples = size;
+        frame->nb_samples = size;
         frame->channels = encoder_fmt_ctx->streams[0]->codecpar->channels;
         frame->channel_layout = encoder_fmt_ctx->streams[0]->codecpar->channel_layout;
         frame->format = encoder_fmt_ctx->streams[0]->codecpar->format;

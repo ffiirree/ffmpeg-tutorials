@@ -9,102 +9,102 @@
 template<class T, int N>
 class RingVector {
 public:
-	explicit RingVector(std::function<T()> allocate = []() { return T{}; }, std::function<void(T*)> deallocate = [](T*) {})
-	{
-		allocate_ = allocate;
-		deallocate_ = deallocate;
+    explicit RingVector(std::function<T()> allocate = []() { return T{}; }, std::function<void(T*)> deallocate = [](T*) {})
+    {
+        allocate_ = allocate;
+        deallocate_ = deallocate;
 
-		for (size_t i = 0; i < N; i++) {
-			buffer_[i] = allocate_();
-		}
-	}
+        for (size_t i = 0; i < N; i++) {
+            buffer_[i] = allocate_();
+        }
+    }
 
-	~RingVector()
-	{
-		for (size_t i = 0; i < N; i++) {
-			deallocate_(&buffer_[i]);
-		}
-	}
+    ~RingVector()
+    {
+        for (size_t i = 0; i < N; i++) {
+            deallocate_(&buffer_[i]);
+        }
+    }
 
-	void push(std::function<void(T)> callback)
-	{
-		std::lock_guard<std::mutex> lock(mtx_);
+    void push(std::function<void(T)> callback)
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
 
-		// last one
-		// 
-		//                   PUSH | POP
-		// ------------------------------------------------
-		// |  -  |  -  | ... |    |  -  | ... |  -  |  -  |
-		// ------------------------------------------------
-		if ((pushed_idx_ + 1) % N == popped_idx_) {
-			full_ = true;
-		}
+        // last one
+        //
+        //                   PUSH | POP
+        // ------------------------------------------------
+        // |  -  |  -  | ... |    |  -  | ... |  -  |  -  |
+        // ------------------------------------------------
+        if ((pushed_idx_ + 1) % N == popped_idx_) {
+            full_ = true;
+        }
 
-		// full & covered
-		if (full_ && (pushed_idx_ == popped_idx_)) {
-			popped_idx_ = (popped_idx_ + 1) % N;
-		}
+        // full & covered
+        if (full_ && (pushed_idx_ == popped_idx_)) {
+            popped_idx_ = (popped_idx_ + 1) % N;
+        }
 
-		// push
-		callback(buffer_[pushed_idx_]);
+        // push
+        callback(buffer_[pushed_idx_]);
 
-		pushed_idx_ = (pushed_idx_ + 1) % N;
-	}
+        pushed_idx_ = (pushed_idx_ + 1) % N;
+    }
 
-	void pop(std::function<void(T)> callback = [](T) {})
-	{
-		std::lock_guard<std::mutex> lock(mtx_);
-		
-		// empty ? last : next
-		callback(EMPTY ? buffer_[(popped_idx_ + N - 1) % N] : buffer_[popped_idx_]);
+    void pop(std::function<void(T)> callback = [](T) {})
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
 
-		// !empty
-		if (!EMPTY) {
-			popped_idx_ = (popped_idx_ + 1) % N;
-		}
+        // empty ? last : next
+        callback(EMPTY ? buffer_[(popped_idx_ + N - 1) % N] : buffer_[popped_idx_]);
 
-		full_ = false;
-	}
+        // !empty
+        if (!EMPTY) {
+            popped_idx_ = (popped_idx_ + 1) % N;
+        }
 
-	void clear()
-	{
-		std::lock_guard<std::mutex> lock(mtx_);
-		popped_idx_ = 0;
-		pushed_idx_ = 0;
-		full_ = false;
-	}
+        full_ = false;
+    }
 
-	bool empty() 
-	{ 
-		std::lock_guard<std::mutex> lock(mtx_); 
-		return EMPTY;
-	}
-	
-	size_t size() 
-	{ 
-		std::lock_guard<std::mutex> lock(mtx_);
+    void clear()
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        popped_idx_ = 0;
+        pushed_idx_ = 0;
+        full_ = false;
+    }
 
-		if (full_) {
-			return N;
-		}
-		return ((pushed_idx_ >= popped_idx_) ? (pushed_idx_) : (pushed_idx_ + N)) - popped_idx_;
-	}
+    bool empty() const
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        return EMPTY;
+    }
 
-	bool full()
-	{
-		std::lock_guard<std::mutex> lock(mtx_);
-		return full_;
-	}
+    size_t size() const
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+
+        if (full_) {
+            return N;
+        }
+        return ((pushed_idx_ >= popped_idx_) ? (pushed_idx_) : (pushed_idx_ + N)) - popped_idx_;
+    }
+
+    bool full() const
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        return full_;
+    }
 
 private:
-	std::function<T()> allocate_{ []() { return T{}; } };
-	std::function<void(T*)> deallocate_{ [](T*) {} };
-	size_t pushed_idx_{ 0 };
-	size_t popped_idx_{ 0 };
-	bool full_{ false };
+    std::function<T()> allocate_{ []() { return T{}; } };
+    std::function<void(T*)> deallocate_{ [](T*) {} };
+    size_t pushed_idx_{ 0 };
+    size_t popped_idx_{ 0 };
+    bool full_{ false };
 
-	T buffer_[N]{};
-	std::mutex mtx_;
+    T buffer_[N]{};
+    mutable std::mutex mtx_;
 };
 #undef EMPTY
 #endif // !PLAYER_RING_VECTOR_H
