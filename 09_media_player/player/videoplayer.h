@@ -29,7 +29,7 @@ protected:
         }
     }
 
-    MediaDecoder* decoder_{ nullptr };
+    std::unique_ptr<MediaDecoder> decoder_{ nullptr };
     AudioPlayer * audio_player_{nullptr};
 
     AVFrame *frame_{ nullptr };

@@ -6,7 +6,7 @@ VideoPlayer::VideoPlayer(QWidget* parent)
     setAttribute(Qt::WA_TranslucentBackground);
 
     frame_ = av_frame_alloc();
-    decoder_ = new MediaDecoder(this);
+    decoder_ = std::make_unique<MediaDecoder>();
     decoder_->set_video_callback([=](AVFrame * frame) {
         mtx_.lock();
         if(frame_) {

@@ -9,7 +9,7 @@ VideoPlayer::VideoPlayer(QWidget* parent)
 
     frame_ = av_frame_alloc();
 
-    decoder_ = new MediaDecoder(this);
+    decoder_ = std::make_unique<MediaDecoder>();
 
     audio_player_ = new AudioPlayer(this);
 

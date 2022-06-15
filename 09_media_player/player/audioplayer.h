@@ -35,7 +35,7 @@ public:
         }
 
         audio_output_ = new QAudioOutput(format, this);
-        audio_output_->setBufferSize(4096 * 5);
+        audio_output_->setBufferSize(4096 * 10);
         audio_io_ = audio_output_->start();
 
         if (!audio_io_) {

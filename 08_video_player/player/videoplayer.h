@@ -28,7 +28,7 @@ protected:
         }
     }
 
-    MediaDecoder* decoder_{ nullptr };
+    std::unique_ptr<MediaDecoder> decoder_{ nullptr };
 
     AVFrame *frame_{ nullptr };
     std::mutex mtx_;

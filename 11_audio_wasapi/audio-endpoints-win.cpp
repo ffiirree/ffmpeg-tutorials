@@ -1,7 +1,5 @@
 #include "audio-io.h"
 
-#ifdef _WIN32
-
 // https://docs.microsoft.com/en-us/windows/win32/coreaudio/device-properties
 int enum_audio_endpoints()
 {
@@ -112,5 +110,3 @@ int default_audio_endpoint()
     printf("Default Endpoint: \"%S\" (%S)\n", varName.pwszVal, id);
     return 0;
 }
-
-#endif //_WIN32

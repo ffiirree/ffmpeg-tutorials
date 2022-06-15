@@ -19,16 +19,12 @@ extern "C" {
 #include "utils.h"
 #include "logging.h"
 
-class MediaDecoder : public QObject {
-    Q_OBJECT
-
+class MediaDecoder {
 public:
-    explicit MediaDecoder(QObject *parent = nullptr): QObject(parent) { }
-
-    ~MediaDecoder() override
-    {
-        close();
-    }
+    MediaDecoder() = default;
+    MediaDecoder(const MediaDecoder&) = delete;
+    MediaDecoder& operator=(const MediaDecoder&) = delete;
+    ~MediaDecoder() { close(); }
 
     bool open(const string& name, const string& format, const string& filters_descr, AVPixelFormat pix_fmt, const map<string, string>& options);
     bool create_filters();

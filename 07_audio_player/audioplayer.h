@@ -5,15 +5,15 @@
 #include <QAudioFormat>
 #include "logging.h"
 
-class AudioPlayer : public QObject {
-    Q_OBJECT
-
+class AudioPlayer {
 public:
-    explicit AudioPlayer(QObject * parent = nullptr) : QObject(parent) {};
-    ~AudioPlayer() override
+    ~AudioPlayer()
     {
-        if(audio_output_)
+        if(audio_output_) {
             audio_output_->stop();
+            delete audio_output_;
+            audio_output_ = nullptr;
+        }
     }
 
     int open(int sample_rate, int channels, int sample_size)
@@ -32,7 +32,7 @@ public:
             return -1;
         }
 
-        audio_output_ = new QAudioOutput(format, this);
+        audio_output_ = new QAudioOutput(format);
         audio_output_->setBufferSize(4096 * 10);
         audio_io_ = audio_output_->start();
 
@@ -49,22 +49,11 @@ public:
         return audio_output_ ? audio_output_->bytesFree() : 0;
     }
 
-    int buffer_size()
-    {
-        return audio_output_ ? audio_output_->bufferSize() : 0;
-    }
-
-    int buffered_size()
-    {
-        return buffer_size() - buffer_free_size();
-    }
-
     int period_size()
     {
         return audio_output_ ? audio_output_->periodSize(): 0;
     }
 
-public slots:
     int64_t write(const char * ptr, int64_t size)
     {
         return audio_io_->write(ptr, size);
