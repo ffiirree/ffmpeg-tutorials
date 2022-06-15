@@ -8,31 +8,31 @@ bool MediaDecoder::open(const std::string& name)
         close();
     }
 
-	// format context
-	fmt_ctx_ = avformat_alloc_context();
-	if (!fmt_ctx_) {
-		return false;
-	}
+    // format context
+    fmt_ctx_ = avformat_alloc_context();
+    if (!fmt_ctx_) {
+        return false;
+    }
 
-	// open input
-	if (avformat_open_input(&fmt_ctx_, name.c_str(), nullptr, nullptr) < 0) {
-		LOG(ERROR) << "avformat_open_input";
-		return false;
-	}
+    // open input
+    if (avformat_open_input(&fmt_ctx_, name.c_str(), nullptr, nullptr) < 0) {
+        LOG(ERROR) << "avformat_open_input";
+        return false;
+    }
 
-	if (avformat_find_stream_info(fmt_ctx_, nullptr) < 0) {
-		LOG(ERROR) << "avformat_find_stream_info";
-		return false;
-	}
+    if (avformat_find_stream_info(fmt_ctx_, nullptr) < 0) {
+        LOG(ERROR) << "avformat_find_stream_info";
+        return false;
+    }
 
-	av_dump_format(fmt_ctx_, 0, name.c_str(), 0);
+    av_dump_format(fmt_ctx_, 0, name.c_str(), 0);
 
-	// find  audio stream
+    // find  audio stream
     audio_stream_index_ = av_find_best_stream(fmt_ctx_, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-	if (audio_stream_index_ < 0) {
-		LOG(ERROR) << "av_find_best_stream()\n";
-		return false;
-	}
+    if (audio_stream_index_ < 0) {
+        LOG(ERROR) << "av_find_best_stream()\n";
+        return false;
+    }
 
     //  audio decoder context
     audio_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[audio_stream_index_]->codecpar->codec_id);
@@ -84,25 +84,25 @@ bool MediaDecoder::open(const std::string& name)
     }
 
     // prepare
-	packet_ = av_packet_alloc();
+    packet_ = av_packet_alloc();
     decoded_audio_frame_ = av_frame_alloc();
 
-	opened_ = true;
-	LOG(INFO) << "[DECODER]: " << name << " is opened";
-	return true;
+    opened_ = true;
+    LOG(INFO) << "[DECODER]: " << name << " is opened";
+    return true;
 }
 
 void MediaDecoder::audio_thread_f()
 {
-	LOG(INFO) << "[AUDIO THREAD] STARTED@" << std::this_thread::get_id();
+    LOG(INFO) << "[AUDIO THREAD] STARTED@" << std::this_thread::get_id();
     defer(LOG(INFO) << "[READ THREAD] EXITED");
 
     RingBuffer ring_buffer(period_size_ * 2);
 
-	while (running()) {
+    while (running()) {
         av_packet_unref(packet_);
-		int ret = av_read_frame(fmt_ctx_, packet_);
-		if (ret < 0) {
+        int ret = av_read_frame(fmt_ctx_, packet_);
+        if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(fmt_ctx_->pb))) {
                 LOG(INFO) << "[AUDIO THREAD] PUT NULL PACKET TO FLUSH DECODERS";
                 // [flushing] 1. Instead of valid input, send NULL to the avcodec_send_packet() (decoding) or avcodec_send_frame() (encoding) functions. This will enter draining mode.
@@ -114,7 +114,7 @@ void MediaDecoder::audio_thread_f()
                 LOG(ERROR) << "[AUDIO THREAD] read frame failed";
                 break;
             }
-		}
+        }
 
         first_pts_ = (first_pts_ == AV_NOPTS_VALUE) ? av_gettime_relative() : first_pts_;
 
@@ -163,26 +163,26 @@ void MediaDecoder::audio_thread_f()
                 // @}
             }
         }
-	}
+    }
 }
 
 void MediaDecoder::close()
 {
-	running_ = false;
+    running_ = false;
     opened_ = false;
 
     if (audio_thread_.joinable()) audio_thread_.join();
 
-	first_pts_ = AV_NOPTS_VALUE;
+    first_pts_ = AV_NOPTS_VALUE;
 
     av_packet_free(&packet_);
 
     av_frame_free(&decoded_audio_frame_);
 
     avcodec_free_context(&audio_decoder_ctx_);
-	avformat_close_input(&fmt_ctx_);
+    avformat_close_input(&fmt_ctx_);
 
     swr_free(&swr_ctx_);
 
-	LOG(INFO) << "[DECODER] CLOSED";
+    LOG(INFO) << "[DECODER] CLOSED";
 }

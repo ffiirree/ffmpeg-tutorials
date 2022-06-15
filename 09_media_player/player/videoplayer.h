@@ -13,7 +13,7 @@ class VideoPlayer : public QWidget {
     Q_OBJECT
 
 public:
-	explicit VideoPlayer(QWidget* parent = nullptr);
+    explicit VideoPlayer(QWidget* parent = nullptr);
     ~VideoPlayer() override { av_frame_free(&frame_); };
 
     bool play(const std::string& name, const std::string& fmt = "", const std::string& filter_descr = "");

@@ -23,17 +23,17 @@ extern "C" {
 const int BUFFER_SIZE = 10;
 
 class MediaDecoder : public QObject {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	explicit MediaDecoder(QObject *parent = nullptr): QObject(parent) { }
-	~MediaDecoder() override {close(); }
+    explicit MediaDecoder(QObject *parent = nullptr): QObject(parent) { }
+    ~MediaDecoder() override {close(); }
 
-	bool open(const string& name);
-	bool create_filters();
+    bool open(const string& name);
+    bool create_filters();
 
     bool opened() { return opened_; }
-	bool running() { return running_; }
+    bool running() { return running_; }
 
     void start()
     {
@@ -52,14 +52,14 @@ public:
     void set_period_size(int64_t size) { period_size_ = size; }
 
 private:
-	void close();
+    void close();
 
-	std::atomic<bool> running_{ false };
+    std::atomic<bool> running_{ false };
     std::atomic<bool> opened_{ false };
 
     std::thread audio_thread_;
 
-	AVFormatContext* fmt_ctx_{ nullptr };
+    AVFormatContext* fmt_ctx_{ nullptr };
     int audio_stream_index_{ -1 };
 
     AVCodecContext* audio_decoder_ctx_{ nullptr };
@@ -71,7 +71,7 @@ private:
 
     SwrContext * swr_ctx_{ nullptr };
 
-	int64_t first_pts_{ AV_NOPTS_VALUE };
+    int64_t first_pts_{ AV_NOPTS_VALUE };
 
     int64_t period_size_{ 4096 * 2 };
 

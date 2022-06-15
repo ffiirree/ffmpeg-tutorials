@@ -73,8 +73,8 @@ private:
     int64_t start_time_{ AV_NOPTS_VALUE };
 
     RingVector<AVFrame*, 16> buffer_{
-        []() { return av_frame_alloc(); },
-        [](AVFrame** frame) { av_frame_free(frame); }
+            []() { return av_frame_alloc(); },
+            [](AVFrame** frame) { av_frame_free(frame); }
     };
 
     // audio params @{

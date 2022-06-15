@@ -11,9 +11,8 @@
 
 class VideoPlayer : public QWidget {
     Q_OBJECT
-
 public:
-	explicit VideoPlayer(QWidget* parent = nullptr);
+    explicit VideoPlayer(QWidget* parent = nullptr);
 
     bool play(const std::string& name);
 

@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
     // decoder context
     AVCodecContext * decoder_ctx = avcodec_alloc_context3(decoder);
     if(!decoder_ctx) {
-       fprintf(stderr, "decoder: avcodec_alloc_context3()\n");
+        fprintf(stderr, "decoder: avcodec_alloc_context3()\n");
         return -1;
     }
 
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 
     encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
     encoder_ctx->framerate = av_guess_frame_rate(decoder_fmt_ctx, decoder_fmt_ctx->streams[video_stream_idx], nullptr);
-    
+
     // time base
     encoder_ctx->time_base = av_inv_q(encoder_ctx->framerate);
     encoder_fmt_ctx->streams[0]->time_base = decoder_fmt_ctx->streams[video_stream_idx]->time_base;
@@ -206,5 +206,5 @@ int main(int argc, char* argv[])
     avcodec_free_context(&decoder_ctx);
     avcodec_free_context(&encoder_ctx);
 
-	return 0;
+    return 0;
 }
