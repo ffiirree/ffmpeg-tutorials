@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 bool MediaDecoder::open(const std::string& name,
                         const std::string& format,
-                        const string& filters_descr,
+                        const std::string& filters_descr,
                         AVPixelFormat pix_fmt,
                         const std::map<std::string, std::string>& options)
 {
@@ -189,7 +189,7 @@ bool MediaDecoder::create_filters()
     }
 
     AVStream* video_stream = fmt_ctx_->streams[video_stream_index_];
-    string args = fmt::format(
+    std::string args = fmt::format(
             "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}",
             video_decoder_ctx_->width, video_decoder_ctx_->height, video_decoder_ctx_->pix_fmt,
             video_stream->time_base.num, video_stream->time_base.den,

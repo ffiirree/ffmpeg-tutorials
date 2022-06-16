@@ -14,6 +14,7 @@ extern "C" {
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <map>
 #include <condition_variable>
 #include "ringvector.h"
 #include "ringbuffer.h"
@@ -29,7 +30,8 @@ public:
     MediaDecoder& operator=(const MediaDecoder&) = delete;
     ~MediaDecoder() { close(); }
 
-    bool open(const string& name, const string& format, const string& filters_descr, AVPixelFormat pix_fmt, const map<string, string>& options);
+    bool open(const std::string& name, const std::string& format, const std::string& filters_descr, AVPixelFormat pix_fmt,
+              const std::map<std::string, std::string>& options);
     bool create_filters();
 
     bool opened() { return opened_; }
@@ -131,7 +133,7 @@ private:
     std::function<void(AVFrame *)> video_callback_{ [](AVFrame *){ } };
     std::function<std::pair<int64_t, bool>(RingBuffer&)> audio_callback_{ [](RingBuffer&) { return std::pair{0, false}; } };
 
-    string filters_descr_;
+    std::string filters_descr_;
     AVFilterGraph* filter_graph_{ nullptr };
     AVFilterContext* buffersrc_ctx_{ nullptr };
     AVFilterContext* buffersink_ctx_{ nullptr };

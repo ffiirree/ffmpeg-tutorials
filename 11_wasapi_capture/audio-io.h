@@ -35,8 +35,6 @@ enum class DeviceType {
 
 class WasapiCapturer {
 public:
-
-public:
     WasapiCapturer() = default;
     WasapiCapturer(const WasapiCapturer&) = delete;
     WasapiCapturer& operator=(const WasapiCapturer&) = delete;
@@ -60,6 +58,7 @@ public:
     enum AVSampleFormat format() const { return sample_fmt_; }
     uint64_t channel_layout() const { return channel_layout_; }
     AVRational time_base() const { return time_base_; }
+
 private:
     int destroy();
     int run_f();

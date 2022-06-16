@@ -2,33 +2,30 @@
 #include "fmt/core.h"
 #include "fmt/ranges.h"
 
-bool MediaDecoder::open(const std::string& name, const std::string& format, const string& filters_descr, AVPixelFormat pix_fmt, const std::map<std::string, std::string>& options)
+bool MediaDecoder::open(const std::string& name,
+                        const std::string& format,
+                        const std::string& filters_descr,
+                        AVPixelFormat pix_fmt,
+                        const std::map<std::string, std::string>& options)
 {
     pix_fmt_ = pix_fmt;
     filters_descr_ = filters_descr;
 
     LOG(INFO) << fmt::format("[DECODER] filters = \"{}\", options = {}", filters_descr, options);
 
-    if (running_ || opened_) {
+    if (running_ || opened_ || fmt_ctx_) {
         close();
-    }
-
-    // format context
-    fmt_ctx_ = avformat_alloc_context();
-    if (!fmt_ctx_) {
-        return false;
     }
 
     avdevice_register_all();
 
+    // format context
+    CHECK_NOTNULL(fmt_ctx_ = avformat_alloc_context());
+
     // input format
     AVInputFormat* input_fmt = nullptr;
     if (!format.empty()) {
-        input_fmt = av_find_input_format(format.c_str());
-        if (!input_fmt) {
-            LOG(ERROR) << "av_find_input_format";
-            return false;
-        }
+        CHECK_NOTNULL(input_fmt = av_find_input_format(format.c_str()));
     }
 
     // options
@@ -39,52 +36,26 @@ bool MediaDecoder::open(const std::string& name, const std::string& format, cons
     }
 
     // open input
-    if (avformat_open_input(&fmt_ctx_, name.c_str(), input_fmt, &input_options) < 0) {
-        LOG(ERROR) << "avformat_open_input";
-        return false;
-    }
-
-    if (avformat_find_stream_info(fmt_ctx_, nullptr) < 0) {
-        LOG(ERROR) << "avformat_find_stream_info";
-        return false;
-    }
+    CHECK(avformat_open_input(&fmt_ctx_, name.c_str(), input_fmt, &input_options) >= 0);
+    CHECK(avformat_find_stream_info(fmt_ctx_, nullptr) >= 0);
 
     av_dump_format(fmt_ctx_, 0, name.c_str(), 0);
 
     // find video & audio stream
     video_stream_index_ = av_find_best_stream(fmt_ctx_, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
-    if (video_stream_index_ < 0) {
-        LOG(ERROR) << "av_find_best_stream()\n";
-        return false;
-    }
+    CHECK(video_stream_index_ >= 0);
 
     // decoder
-    video_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[video_stream_index_]->codecpar->codec_id);
-    if (!video_decoder_) {
-        LOG(ERROR) << "avcodec_find_decoder() for video";
-        return false;
-    }
-
+    CHECK_NOTNULL( video_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[video_stream_index_]->codecpar->codec_id));
     // video decoder context
-    video_decoder_ctx_ = avcodec_alloc_context3(video_decoder_);
-    if (!video_decoder_ctx_) {
-        LOG(ERROR) << "avcodec_alloc_context3";
-        return false;
-    }
-
-    if (avcodec_parameters_to_context(video_decoder_ctx_, fmt_ctx_->streams[video_stream_index_]->codecpar) < 0) {
-        LOG(ERROR) << "avcodec_parameters_to_context";
-        return false;
-    }
+    CHECK_NOTNULL(video_decoder_ctx_ = avcodec_alloc_context3(video_decoder_));
+    CHECK(avcodec_parameters_to_context(video_decoder_ctx_, fmt_ctx_->streams[video_stream_index_]->codecpar) >= 0);
 
     // open codec
     AVDictionary* decoder_options = nullptr;
     defer(av_dict_free(&decoder_options));
     av_dict_set(&decoder_options, "threads", "auto", 0);
-    if (avcodec_open2(video_decoder_ctx_, video_decoder_, &decoder_options) < 0) {
-        LOG(ERROR) << "avcodec_open2 failed for video\n";
-        return false;
-    }
+    CHECK(avcodec_open2(video_decoder_ctx_, video_decoder_, &decoder_options) >= 0);
 
     // filter graph
     if (!create_filters()) {
@@ -110,11 +81,7 @@ bool MediaDecoder::open(const std::string& name, const std::string& format, cons
 bool MediaDecoder::create_filters()
 {
     // filters
-    filter_graph_ = avfilter_graph_alloc();
-    if (!filter_graph_) {
-        LOG(ERROR) << "avfilter_graph_alloc";
-        return false;
-    }
+    CHECK_NOTNULL(filter_graph_ = avfilter_graph_alloc());
 
     const AVFilter* buffersrc = avfilter_get_by_name("buffer");
     const AVFilter* buffersink = avfilter_get_by_name("buffersink");
@@ -124,7 +91,7 @@ bool MediaDecoder::create_filters()
     }
 
     AVStream* video_stream = fmt_ctx_->streams[video_stream_index_];
-    string args = fmt::format(
+    std::string args = fmt::format(
             "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}",
             video_decoder_ctx_->width, video_decoder_ctx_->height, video_decoder_ctx_->pix_fmt,
             video_stream->time_base.num, video_stream->time_base.den,
@@ -191,7 +158,7 @@ bool MediaDecoder::create_filters()
 
 void MediaDecoder::start()
 {
-    if (!opened() || running_) {
+    if (!opened_ || running_) {
         LOG(ERROR) << "[DECODER] already running or not opened";
         return;
     }

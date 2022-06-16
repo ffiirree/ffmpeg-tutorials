@@ -1,12 +1,6 @@
 #ifndef PLAYER_UTILS_H
 #define PLAYER_UTILS_H
 
-#include <string>
-#include <map>
-
-using std::string;
-using std::map;
-
 #ifndef st
 #define st(X) do{X}while(0)
 #endif
