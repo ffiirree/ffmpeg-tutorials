@@ -12,8 +12,27 @@ int main(int argc, char* argv[])
 
     const char * out_filename = argc >= 2 ? argv[1] : "out.mp4";
 
-    enum_audio_endpoints();
-    default_audio_endpoint();
+    // devices @{
+    auto output_devices = enum_audio_endpoints(false);
+    for (auto& [name, id] : output_devices) {
+        LOG(INFO) << "[OUTPUT] name = '" << name << "', id = '" << id << "'";
+    }
+
+    auto input_devices = enum_audio_endpoints(true);
+    for (auto& [name, id] : input_devices) {
+        LOG(INFO) << "[ INPUT] name = '" << name << "', id = '" << id << "'";
+    }
+
+    auto default_out_device = default_audio_endpoint(false);
+    if (default_out_device.has_value()) {
+        LOG(INFO) << "[OUTPUT] name = '" << default_out_device->first << "', id = '" << default_out_device->second << "' (default)";
+    }
+
+    auto default_in_device = default_audio_endpoint(true);
+    if (default_out_device.has_value()) {
+        LOG(INFO) << "[ INPUT] name = '" << default_in_device->first << "', id = '" << default_in_device->second << "' (default)";
+    }
+    // @}
 
     // INPUT @{@
     std::unique_ptr<WasapiCapturer> decoder = std::make_unique<WasapiCapturer>();

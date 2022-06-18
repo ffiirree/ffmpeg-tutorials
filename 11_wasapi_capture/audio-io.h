@@ -19,6 +19,7 @@
 #include <atomic>
 #include <thread>
 #include <mutex>
+#include <optional>
 #include <Audioclient.h>
 
 extern "C" {
@@ -92,7 +93,8 @@ private:
     // @}
 };
 
-int enum_audio_endpoints();
-int default_audio_endpoint();
+// all std::string is utf8
+std::vector<std::pair<std::string, std::string>> enum_audio_endpoints(bool is_input);
+std::optional<std::pair<std::string, std::string>> default_audio_endpoint(bool is_input);
 
 #endif //!AUDIO_IO_H
