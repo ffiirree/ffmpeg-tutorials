@@ -1,5 +1,5 @@
-#ifndef PLAYER_RING_VECTOR_H
-#define PLAYER_RING_VECTOR_H
+#ifndef FFMPEG_EXAMPLES_RING_VECTOR_H
+#define FFMPEG_EXAMPLES_RING_VECTOR_H
 
 #include <mutex>
 #include <functional>
@@ -107,4 +107,4 @@ private:
     mutable std::mutex mtx_;
 };
 #undef EMPTY
-#endif // !PLAYER_RING_VECTOR_H
+#endif // !FFMPEG_EXAMPLES_RING_VECTOR_H

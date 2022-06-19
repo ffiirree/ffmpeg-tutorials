@@ -1,5 +1,5 @@
 #include "wasapi-rendering.h"
-#include "utils.h"
+#include "defer.h"
 
 uint64_t to_ffmpeg_channel_layout(DWORD layout, int channels)
 {

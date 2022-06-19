@@ -18,7 +18,7 @@ extern "C" {
 #include <condition_variable>
 #include "ringvector.h"
 #include "ringbuffer.h"
-#include "utils.h"
+#include "defer.h"
 #include "logging.h"
 
 const int BUFFER_SIZE = 20;

@@ -5,7 +5,7 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
-#include "utils.h"
+#include "defer.h"
 #include "logging.h"
 #include "fmt/format.h"
 

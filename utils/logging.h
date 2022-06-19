@@ -1,5 +1,5 @@
-#ifndef PLAYER_LOGGING_H
-#define PLAYER_LOGGING_H
+#ifndef FFMPEG_EXAMPLES_LOGGING_H
+#define FFMPEG_EXAMPLES_LOGGING_H
 
 #include <glog/logging.h>
 
@@ -18,11 +18,11 @@ public:
     }
 
 private:
-    Logger(char** argv) {
+    explicit Logger(char** argv) {
         google::InitGoogleLogging(argv[0]);
         FLAGS_logbufsecs = 0;
         FLAGS_stderrthreshold = google::GLOG_INFO;
         FLAGS_colorlogtostderr = true;
     }
 };
-#endif // !PLAYER_LOGGING_H
+#endif // !FFMPEG_EXAMPLES_LOGGING_H

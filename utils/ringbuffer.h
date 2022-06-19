@@ -1,5 +1,5 @@
-#ifndef PLAYER_RING_BUFFER_H
-#define PLAYER_RING_BUFFER_H
+#ifndef FFMPEG_EXAMPLES_RING_BUFFER_H
+#define FFMPEG_EXAMPLES_RING_BUFFER_H
 
 #include <mutex>
 #include <cstring>
@@ -226,4 +226,4 @@ private:
     std::mutex mtx_;
 };
 #undef EMPTY
-#endif // !PLAYER_RING_BUFFER_H
+#endif // !FFMPEG_EXAMPLES_RING_BUFFER_H

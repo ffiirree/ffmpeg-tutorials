@@ -9,7 +9,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 }
 #include "logging.h"
-#include "utils.h"
+#include "defer.h"
 #include "fmt/format.h"
 
 int main(int argc, char* argv[])

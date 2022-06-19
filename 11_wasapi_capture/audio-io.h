@@ -1,7 +1,7 @@
 #ifndef AUDIO_IO_H
 #define AUDIO_IO_H
 
-#include "utils.h"
+#include "defer.h"
 #include "ringvector.h"
 
 #define RETURN_ON_ERROR(hres)  if (FAILED(hres)) { return -1; }

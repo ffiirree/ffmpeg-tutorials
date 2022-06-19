@@ -16,7 +16,7 @@ extern "C" {
 #include <libavfilter/buffersrc.h>
 }
 
-#include "utils.h"
+#include "defer.h"
 #include "logging.h"
 #include "ringvector.h"
 #include "fmt/format.h"

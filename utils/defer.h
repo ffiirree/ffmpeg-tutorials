@@ -1,9 +1,5 @@
-#ifndef PLAYER_UTILS_H
-#define PLAYER_UTILS_H
-
-#ifndef st
-#define st(X) do{X}while(0)
-#endif
+#ifndef FFMPEG_EXAMPLES_DEFER_H
+#define FFMPEG_EXAMPLES_DEFER_H
 
 template <typename F> class defer_raii
 {
@@ -40,4 +36,4 @@ template <typename F> defer_raii<F> defer_func(F&& f)
 
 #define defer(lambda__) [[maybe_unused]] const auto& DEFER_UNIQUE_VARNAME(_defer_) = defer_func([&]() { lambda__; })
 
-#endif // !PLAYER_UTILS_H
+#endif // !FFMPEG_EXAMPLES_DEFER_H

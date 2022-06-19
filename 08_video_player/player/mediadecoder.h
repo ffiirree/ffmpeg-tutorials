@@ -15,7 +15,7 @@ extern "C" {
 #include <thread>
 #include <map>
 #include <functional>
-#include "utils.h"
+#include "defer.h"
 #include "logging.h"
 
 class MediaDecoder {

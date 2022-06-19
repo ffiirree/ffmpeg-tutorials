@@ -10,7 +10,7 @@ extern "C" {
 #include <mutex>
 #include <thread>
 #include "ringvector.h"
-#include "utils.h"
+#include "defer.h"
 #include "logging.h"
 
 class AudioDecoder {
