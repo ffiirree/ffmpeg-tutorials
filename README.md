@@ -63,12 +63,14 @@ git submodule update
 - [ ] [simple filter](/04_simple_filters/README.md)
 - [ ] [complex filter](/05_complex_filter/README.md)
 - [x] [generating high quality GIF](/06_gen_gif/README.md)
-- [ ] [audio player with Qt](/07_audio_player/README.md)
-- [ ] [video player with Qt](/08_video_player/README.md)
-- [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md)
+- [ ] [audio player with Qt](/07_audio_player/README.md) / SDL2
+- [ ] [video player with Qt](/08_video_player/README.md) / SDL2
+- [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md) / SDL2
 - [x] [RTMP Streaming](/10_streaming/README.md)
 - [ ] [record speakers/microphones by WASAPI(Windows)](/11_wasapi_capture/README.md)
 - [ ] [render audio stream by WASAPI(Windows)](/12_wasapi_render/README.md)
+- [ ] hardware acceleration
+- [ ] DirectShow
 
 
 ## References
