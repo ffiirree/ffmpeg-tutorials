@@ -39,7 +39,7 @@ ffmpeg -i hevc.mkv -r 15 -y default.gif
 # ~46M
 ffmpeg -i hevc.mkv -vf "[0:v] split [a][b];[a] palettegen=stats_mode=single:max_colors=256 [p];[b][p] paletteuse=new=1" -y high_r24_c256.gif
 
-# 降低一点帧率，24->15，体积减小很多，不过这个体积减小的比例在不同分辨率，不同参数下是不一样的，视实际情况而定
+# 降低一点帧率：24->15，体积减小很多，不过这个体积减小的比例在不同分辨率，不同参数下是不一样的，视实际情况而定
 # 只要不觉得卡，帧率可以一直降低
 # 27.6MB
 ffmpeg -i hevc.mkv -vf "[0:v] fps=15,split [a][b];[a] palettegen=stats_mode=single:max_colors=256 [p];[b][p] paletteuse=new=1" -y high_r15_c256.gif
@@ -55,20 +55,20 @@ ffmpeg -i hevc.mkv -vf "[0:v] fps=15,split [a][b];[a] palettegen=stats_mode=sing
 # 18.8MB
 ffmpeg -i hevc.mkv -vf "[0:v] fps=15,split [a][b];[a] palettegen=stats_mode=full:max_colors=256 [p];[b][p] paletteuse" -y high_full_r15_c256.gif
 
-# 降低颜色数，256->128，色彩断层比较严重，特别是分辨率较高的情况下
+# 降低最大颜色数：256->128，色彩断层比较严重，特别是分辨率较高的情况下
 # 低分辨率下，为了进一步降低体积，可以选择降低颜色数
 # 18.6MB
 ffmpeg -i hevc.mkv -vf "[0:v] fps=15,split [a][b];[a] palettegen=stats_mode=single:max_colors=128 [p];[b][p] paletteuse=new=1:dither=none" -y medium_r15_c128_nondither.gif
 
-# 除非颜色比较单一的场景，否则不建议进一步降低颜色数了
+# 再次降低最大颜色数：128->64，除非颜色比较单一的场景，否则不建议进一步降低颜色数了
 # 13.8MB
 ffmpeg -i hevc.mkv -vf "[0:v] fps=15,split [a][b];[a] palettegen=stats_mode=single:max_colors=64 [p];[b][p] paletteuse=new=1:dither=none" -y low_r15_c64_nondither.gif
 
-# 降低分辨率以及帧率，960->640，面积为原先的44%
+# 降低分辨率以及帧率，960->640，显示面积为原先的44%
 # 5.76MB
 ffmpeg -i hevc.mkv -vf "[0:v] fps=10,scale=640:-1:flags=lanczos,split [a][b];[a] palettegen=stats_mode=single:max_colors=128 [p];[b][p] paletteuse=new=1:dither=none" -y medium_640_r10_c128_nondither.gif
 
-# 全局调色盘，涂抹感要严重一些
+# 使用全局调色盘，涂抹感要严重一些
 # 3.04MB
 ffmpeg -i hevc.mkv -vf "[0:v] fps=10,scale=640:-1:flags=lanczos,split [a][b];[a] palettegen=stats_mode=full:max_colors=128 [p];[b][p] paletteuse=dither=none" -y medium_full_640_r10_c128_nondither.gif
 

@@ -23,6 +23,8 @@ VideoPlayer::VideoPlayer()
                                              decoder_->width(), decoder_->height(),
                                              SDL_WINDOW_OPENGL
     ));
+
+    CHECK_NOTNULL(renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED  | SDL_RENDERER_PRESENTVSYNC));
 }
 
 VideoPlayer::~VideoPlayer()
@@ -48,7 +50,6 @@ bool VideoPlayer::play(const std::string& name, const std::string& fmt)
     SDL_SetWindowTitle(window_, name.c_str());
     SDL_SetWindowSize(window_, decoder_->width(), decoder_->height());
 
-    CHECK_NOTNULL(renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED  | SDL_RENDERER_PRESENTVSYNC));
     CHECK_NOTNULL(texture_ = SDL_CreateTexture(renderer_,
                                                SDL_PIXELFORMAT_IYUV,
                                                SDL_TEXTUREACCESS_STREAMING,

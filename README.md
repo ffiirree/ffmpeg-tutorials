@@ -75,7 +75,7 @@ git submodule update
 - [ ] [audio player with Qt](/07_audio_player/README.md)
 - [x] [video player with SDL2](/08_video_player_sdl/README.md)
 - [x] [video player with Qt](/08_video_player_qt/README.md)
-- [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md) / SDL2
+- [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md)
 - [x] [RTMP Streaming](/10_streaming/README.md)
 - [ ] [record speakers/microphones by WASAPI(Windows)](/11_wasapi_capture/README.md)
 - [ ] [render audio stream by WASAPI(Windows)](/12_wasapi_render/README.md)
