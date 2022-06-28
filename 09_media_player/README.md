@@ -20,7 +20,7 @@
 
 ## 视频播放
 
-[Video Player](/08_video_player/README.md)
+[Video Player](/08_video_player_qt/README.md)
 
 
 ## 音视频同步

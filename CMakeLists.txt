@@ -20,6 +20,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "build static libraries.")
 set(WITH_GFLAGS OFF CACHE BOOL "Use gflags")
 add_subdirectory(3rdparty/glog EXCLUDE_FROM_ALL)
 add_subdirectory(3rdparty/fmt EXCLUDE_FROM_ALL)
+add_subdirectory(3rdparty/SDL EXCLUDE_FROM_ALL)
 
 # Qt5
 set(CMAKE_AUTOMOC ON)
@@ -68,7 +69,8 @@ create_exe(filter 04_simple_filter/filter.cpp)
 
 add_subdirectory(05_complex_filter)
 add_subdirectory(07_audio_player)
-add_subdirectory(08_video_player)
+add_subdirectory(08_video_player_qt)
+add_subdirectory(08_video_player_sdl)
 add_subdirectory(09_media_player)
 add_subdirectory(10_streaming)
 add_subdirectory(11_wasapi_capture)

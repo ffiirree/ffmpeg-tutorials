@@ -4,3 +4,6 @@
 [submodule "3rdparty/fmt"]
 	path = 3rdparty/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "3rdparty/SDL"]
+	path = 3rdparty/SDL
+	url = https://github.com/libsdl-org/SDL.git

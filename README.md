@@ -15,7 +15,7 @@ Examples and tutorials for `decoding/encoding`, `(complex)filtering`, `screen/ca
 - [Windows builds](https://www.ffmpeg.org/download.html#build-windows): 注意下载**库(shared)**版本，添加到**环境变量**中
 - [Build from source](/compile_on_windows.md)
 
-#### Qt
+#### Qt5
 
 > 6.0 > Version >= 5.12.10
 
@@ -45,6 +45,14 @@ sudo apt install mesa-common-dev
 - C++ 17
 - CMake >= 3.12
 
+### Other dependencies
+
+> No installation required
+
+- [glog](https://github.com/google/glog): Google Logging (glog) is a C++98 library that implements application-level logging. The library provides logging APIs based on C++-style streams and various helper macros.
+- [SDL2](https://github.com/libsdl-org/SDL): Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D. It is used by video playback software, emulators, and popular games including Valve's award winning catalog and many Humble Bundle games.
+- [fmt](https://github.com/fmtlib/fmt): {fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams.
+
 ### Usage
 
 ```bash
@@ -63,15 +71,16 @@ git submodule update
 - [ ] [simple filter](/04_simple_filters/README.md)
 - [ ] [complex filter](/05_complex_filter/README.md)
 - [x] [generating high quality GIF](/06_gen_gif/README.md)
-- [ ] [audio player with Qt](/07_audio_player/README.md) / SDL2
-- [ ] [video player with Qt](/08_video_player/README.md) / SDL2
+- [ ] audio player with SDL2
+- [ ] [audio player with Qt](/07_audio_player/README.md)
+- [x] [video player with SDL2](/08_video_player_sdl/README.md)
+- [x] [video player with Qt](/08_video_player_qt/README.md)
 - [ ] [media player with Qt (syncing audio and video)](/09_media_player/README.md) / SDL2
 - [x] [RTMP Streaming](/10_streaming/README.md)
 - [ ] [record speakers/microphones by WASAPI(Windows)](/11_wasapi_capture/README.md)
 - [ ] [render audio stream by WASAPI(Windows)](/12_wasapi_render/README.md)
 - [ ] hardware acceleration
 - [ ] DirectShow
-
 
 ## References
 
