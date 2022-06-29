@@ -79,7 +79,7 @@ git submodule update
 - [x] [RTMP Streaming](/10_streaming/README.md)
 - [ ] [record speakers/microphones by WASAPI(Windows)](/11_wasapi_capture/README.md)
 - [ ] [render audio stream by WASAPI(Windows)](/12_wasapi_render/README.md)
-- [ ] hardware acceleration
+- [ ] [hardware acceleration](/13_hwaccel/README.md)
 - [ ] DirectShow
 
 ## References

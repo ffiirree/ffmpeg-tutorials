@@ -58,7 +58,7 @@ list(
 function(create_exe name source_file)
     add_executable(${name} ${source_file})
     target_link_libraries(${name} PRIVATE ${LIBS})
-    target_include_directories(${name} PRIVATE 3rdparty utils)
+    target_include_directories(${name} PRIVATE utils)
 endfunction(create_exe)
 
 create_exe(remuxing 01_remuxing/remuxing.cpp)
@@ -66,6 +66,7 @@ create_exe(transcoding 02_transcoding/transcoding.cpp)
 create_exe(recording 03_recording/recording.cpp)
 create_exe(recording_mic 03_recording/recording_mic.cpp)
 create_exe(filter 04_simple_filter/filter.cpp)
+create_exe(cuda_decode 13_hwaccel/cuda_decode.cpp)
 
 add_subdirectory(05_complex_filter)
 add_subdirectory(07_audio_player)
