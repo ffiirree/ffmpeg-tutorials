@@ -161,5 +161,6 @@ first_pts += resampled_frame->nb_samples;
 - [[Ffmpeg-devel] Frame rates and time_base](http://ffmpeg.org/pipermail/ffmpeg-devel/2005-May/003079.html)
 - [ffmpeg time unit explanation and av_seek_frame method](https://stackoverflow.com/questions/12234949/ffmpeg-time-unit-explanation-and-av-seek-frame-method)
 - [[Libav-user] Helo in understanding PTS and DTS](https://ffmpeg.org/pipermail/libav-user/2012-November/003207.html)
-- [数字音频基础­­­­­－从PCM说起](https://zhuanlan.zhihu.com/p/212318683)
+- [数字音频基础 －从PCM说起](https://zhuanlan.zhihu.com/p/212318683)
 - [transcode_aac_8c-example](http://ffmpeg.org/doxygen/trunk/transcode_aac_8c-example.html)
+- [YUV PixelFormat](https://docs.microsoft.com/en-us/windows/win32/medfound/recommended-8-bit-yuv-formats-for-video-rendering)
