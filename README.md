@@ -80,7 +80,7 @@ git submodule update
 - [ ] [record speakers/microphones by WASAPI(Windows)](/11_wasapi_capture/README.md)
 - [ ] [render audio stream by WASAPI(Windows)](/12_wasapi_render/README.md)
 - [ ] [hardware acceleration](/13_hwaccel/README.md)
-- [ ] DirectShow
+- [ ] [Windows Multimedia](/14_windows_mm/README.md)
 
 ## References
 

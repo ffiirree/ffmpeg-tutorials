@@ -170,16 +170,16 @@ int main(int argc, char* argv[])
                 if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                     break;
                 } else if(ret < 0) {
-                    LOG(ERROR) << "[RECORDING] avcodec_receive_packet()";
+                    LOG(ERROR) << "[ENCODING] avcodec_receive_packet()";
                     return ret;
                 }
 
-                LOG(INFO) << fmt::format("[ENCORDING] packet = {:>5d}, pts = {:>8d}, size = {:>6d}",
+                LOG(INFO) << fmt::format("[ENCODING] packet = {:>5d}, pts = {:>8d}, size = {:>6d}",
                                          encoder_ctx->frame_number, out_packet->pts,  out_packet->size);
 
                 out_packet->stream_index = 0;
                 if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
-                    LOG(ERROR) << "[RECORDING] av_interleaved_write_frame()";
+                    LOG(ERROR) << "[ENCODING] av_interleaved_write_frame()";
                     return -1;
                 }
             }
