@@ -25,6 +25,24 @@ ffmpeg -f gdigrab -framerate 25 -offset_x 100 -offset_y 200 -video_size 720x360 
 ffmpeg -f v4l2 -i /dev/video0 -c:v libx264 camera.mkv
 # 录制屏幕
 ffmpeg -framerate 25 -video_size 720x360 -f x11grab -i :0.0+100,200 -c:v libx264 screen.mp4
+
+# 录制麦克风
+ffmpeg -f pulse -i default -y a.wav
+ffmpeg -f alsa -i default -y a.wav
+
+# 录制扬声器
+ffmpeg -hide_banner -sources pulse # ffmpeg查看pulse音频源
+# Auto-detected sources for pulse:
+# * alsa_input.usb-046d_081b_D16189C0-02.mono-fallback [Webcam C310 Mono]
+#   alsa_output.pci-0000_00_1f.3.iec958-stereo.monitor [Monitor of Built-in Audio Digital Stereo (IEC958)]
+#   alsa_output.pci-0000_01_00.1.hdmi-stereo.monitor [Monitor of TU104 HD Audio Controller Digital Stereo (HDMI)]
+
+# pactl list short sources
+# 1	alsa_input.usb-046d_081b_D16189C0-02.mono-fallback	module-alsa-card.c	s16le 1ch 48000Hz	SUSPENDED
+# 2	alsa_output.pci-0000_00_1f.3.iec958-stereo.monitor	module-alsa-card.c	s16le 2ch 44100Hz	SUSPENDED
+# 3	alsa_output.pci-0000_01_00.1.hdmi-stereo.monitor	module-alsa-card.c	s16le 2ch 44100Hz	SUSPENDED
+
+ffmpeg -hide_banner -f pulse -i alsa_output.pci-0000_01_00.1.hdmi-stereo.monitor -y a.wav
 ```
 
 ## 视频录制

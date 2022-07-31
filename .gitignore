@@ -66,6 +66,7 @@ enc_temp_folder
 !hevc.mkv
 *.gif
 *.pptx
+*.wav
 
 !ico_win32.rc
 
