@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
         packet->stream_index = stream_mapping[packet->stream_index];
 
         if (encoder_fmt_ctx->streams[packet->stream_index]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-            printf(" -- pts: %lld, dts: %lld, duration: %lld, frame = %lld\n",
+            printf(" -- pts: %ld, dts: %ld, duration: %ld, frame = %ld\n",
                    packet->pts, packet->dts, packet->duration, ++frame_number);
         }
 

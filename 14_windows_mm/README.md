@@ -20,7 +20,7 @@ Starting with Windows 7, the existing APIs have been improved and new APIs have 
 
 The Microsoft DirectShow application programming interface (API) is a media-streaming architecture for Microsoft Windows. Using DirectShow, your applications can perform high-quality video and audio playback or capture.
 
-Microsoft® DirectShow® is an architecture for streaming media on the Microsoft Windows® platform. DirectShow provides for high-quality capture and playback of multimedia streams. It supports a wide variety of formats, including Advanced Systems Format (ASF), Motion Picture Experts Group (MPEG), Audio-Video Interleaved (AVI), MPEG Audio Layer-3 (MP3), and WAV sound files. It supports capture from digital and analog devices based on the Windows Driver Model (WDM) or Video for Windows. It automatically detects and uses video and audio acceleration hardware when available, but also supports systems without acceleration hardware.
+Microsoft DirectShow is an architecture for streaming media on the Microsoft Windows platform. DirectShow provides for high-quality capture and playback of multimedia streams. It supports a wide variety of formats, including Advanced Systems Format (ASF), Motion Picture Experts Group (MPEG), Audio-Video Interleaved (AVI), MPEG Audio Layer-3 (MP3), and WAV sound files. It supports capture from digital and analog devices based on the Windows Driver Model (WDM) or Video for Windows. It automatically detects and uses video and audio acceleration hardware when available, but also supports systems without acceleration hardware.
 
 DirectShow is based on the Component Object Model (COM). To write a DirectShow application or component, you must understand COM client programming. For most applications, you do not need to implement your own COM objects. DirectShow provides the components you need. If you want to extend DirectShow by writing your own components, however, you must implement them as COM objects.
 
@@ -28,25 +28,75 @@ DirectShow is designed for C++. Microsoft does not provide a managed API for Dir
 
 DirectShow simplifies media playback, format conversion, and capture tasks. At the same time, it provides access to the underlying stream control architecture for applications that require custom solutions. You can also create your own DirectShow components to support new formats or custom effects.
 
+![DirectShow](/14_windows_mm/directshow_arch.png)
+
 ### Microsoft Media Foundation
 
-## Graphics and gaming
+Microsoft Media Foundation enables the development of applications and components for using digital media on Windows Vista and later.
 
-Provides information about graphics and gaming features of Windows, including DirectX and digital imaging.
+Media Foundation is the next generation multimedia platform for Windows that enables developers, consumers, and content providers to embrace the new wave of premium content with enhanced robustness, unparalleled quality, and seamless interoperability.
+
+## Windows Graphics
+
+Windows provides several C++/COM APIs for graphics. These APIs are shown in the following diagram.
 
 ![Windows Graphics Architecture](/14_windows_mm/win_graphics_arch.png)
 
-### Windows GDI
+- `Graphics Device Interface (GDI)` is the original graphics interface for Windows. GDI was first written for 16-bit Windows and then updated for 32-bit and 64-bit Windows.
+- `GDI+` was introduced in Windows XP as a successor to GDI. The GDI+ library is accessed through a set of C++ classes that wrap flat C functions. The .NET Framework also provides a managed version of GDI+ in the System.Drawing namespace.
+- `Direct3D` supports 3-D graphics.
+- `Direct2D` is a modern API for 2-D graphics, the successor to both GDI and GDI+.
+- `DirectWrite` is a text layout and rasterization engine. You can use either GDI or Direct2D to draw the rasterized text.
+- `DirectX Graphics Infrastructure (DXGI)` performs low-level tasks, such as presenting frames for output. Most applications do not use DXGI directly. Rather, it serves as an intermediate layer between the graphics driver and Direct3D.
 
-### DirectX Graphics and Gaming
+Direct2D is the focus of this module. While both GDI and GDI+ continue to be supported in Windows, **Direct2D and DirectWrite are recommended for new programs**. In some cases, a mix of technologies might be more practical. For these situations, Direct2D and DirectWrite are designed to interoperate with GDI.
 
-Microsoft DirectX graphics provides a set of APIs that you can use to create games and other high-performance multimedia applications. DirectX graphics includes support for high-performance 2-D and 3-D graphics.
+While GDI supports hardware acceleration for certain operations, many GDI operations are bound to the CPU. Direct2D is layered on top of Direct3D, and takes full advantage of hardware acceleration provided by the GPU. If the GPU does not support the features needed for Direct2D, then Direct2D falls back to software rendering. Overall, **Direct2D outperforms GDI and GDI+ in most situations**.
 
-For 3-D graphics, use the Microsoft Direct3D 11 API. Even if you have Microsoft Direct3D 9-level or Microsoft Direct3D 10-level hardware, you can use the Direct3D 11 API and target a feature level 9_x or feature level 10_x device. For info about how to develop 3-D graphics with DirectX, see Create 3D graphics with DirectX.
+**Direct2D supports fully hardware-accelerated alpha-blending (transparency).**
 
-For 2-D graphics and text, use Direct2D and DirectWrite rather than Windows Graphics Device Interface (GDI).
+GDI has limited support for alpha-blending. Most GDI functions do not support alpha blending, although GDI does support alpha blending during a bitblt operation. GDI+ supports transparency, but the alpha blending is performed by the CPU, so it does not benefit from hardware acceleration.
 
-To compose bitmaps that Direct3D 11 or Direct2D populated, use DirectComposition.
+Hardware-accelerated alpha-blending also enables anti-aliasing. GDI does not support anti-aliasing when it draws geometry (lines and curves). GDI can draw anti-aliased text using ClearType; but otherwise, GDI text is aliased as well. Aliasing is particularly noticeable for text, because the jagged lines disrupt the font design, making the text less readable. Although GDI+ supports anti-aliasing, it is applied by the CPU, so the performance is not as good as Direct2D.
+
+### The Desktop Window Manager (DWM)
+
+Before Windows Vista, a Windows program would draw **directly** to the screen. In other words, the program would write directly to the memory buffer shown by the video card. This approach can cause visual artifacts if a window does not repaint itself correctly. Windows Vista fundamentally changed how windows are drawn, by introducing the `Desktop Window Manager (DWM)`. When the DWM is enabled, a window no longer draws directly to the display buffer. Instead, each window draws to an offscreen memory buffer, also called an offscreen surface. The DWM then composites these surfaces to the screen.
+
+![W/O DWM](/14_windows_mm/dwm_w_o.png)
+
+
+#### The Windows Display Driver Model  (WDDM)
+
+`The Windows Display Driver Model (WDDM)` is the graphics display driver architecture introduced in Windows Vista (WDDM v1.0). WDDM is required starting with Windows 8 (WDDM v1.2). The WDDM design guide discusses WDDM requirements, specifications, and behavior for WDDM drivers.
+
+![DX10](/14_windows_mm/dx10arch.png)
+
+A graphics hardware vendor must supply the user-mode display driver and the display miniport driver. The user-mode display driver is a dynamic-link library (DLL) that is loaded by the Microsoft Direct3D runtime. **The display miniport driver communicates with the Microsoft DirectX graphics kernel subsystem.**
+
+### `DirectX`
+
+`Microsoft DirectX Graphics Infrastructure (DXGI)` recognizes that some parts of graphics evolve more slowly than others. The primary goal of DXGI is to manage low-level tasks that can be independent of the DirectX graphics runtime. DXGI provides a common framework for future graphics components; the first component that takes advantage of DXGI is Microsoft Direct3D 10.
+
+In previous versions of Direct3D, low-level tasks like enumeration of hardware devices, presenting rendered frames to an output, controlling gamma, and managing a full-screen transition were included in the Direct3D runtime. These tasks are now implemented in DXGI.
+
+DXGI's purpose is to communicate with the kernel mode driver and the system hardware, as shown in the following diagram.
+
+![DXGI](/14_windows_mm/dxgi-dll.png)
+
+An application can access DXGI directly, or call the Direct3D APIs in D3D11_1.h, D3D11.h, D3D10_1.h, or D3D10.h, which handles the communications with DXGI for you. You may want to work with DXGI directly if your application needs to enumerate devices or control how data is presented to an output.
+
+
+#### Desktop Duplication API
+
+Windows 8 disables standard Windows 2000 Display Driver Model (XDDM) mirror drivers and offers the `desktop duplication API` instead. The desktop duplication API provides remote access to a desktop image for collaboration scenarios. **Apps can use the desktop duplication API to access frame-by-frame updates to the desktop**. Because apps receive updates to the desktop image in a DXGI surface, the apps can use the full power of the GPU to process the image updates.
+
+## 屏幕采集方法
+
+- `GDI`: 兼容各版本的Windows，占用大量CPU资源，性能差，鼠标需要单采，无法实现过滤制定窗口
+- `DXGI`: Windows 8及后续版本，性能最好
+- `Magnification`: 能实现放大缩小颜色转换等操作，能过滤窗口
+- `Window Graphics Capturer`: 效率高，拓展屏采集支持高，1080p采集消耗GPU达到个位数
 
 ### OBS Studio 画面捕获实现
 
@@ -72,3 +122,6 @@ OBS Studio 在Windows上提供了三种捕获模式：
 - [obs-studio/win-capture](https://github.com/obsproject/obs-studio/tree/master/plugins/win-capture)
 - [obs-studio/win-dshow](https://github.com/obsproject/obs-studio/tree/master/plugins/win-dshow)
 - [obs-studio/win-wasapi](https://github.com/obsproject/obs-studio/tree/master/plugins/win-wasapi)
+- [录屏采集实现教程——Windows桌面端](https://juejin.cn/post/6975094080904790052)
+- [Desktop Duplication API](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/desktop-dup-api)
+- [WDDM](https://learn.microsoft.com/en-us/windows-hardware/drivers/display/windows-vista-display-driver-model-design-guide)
