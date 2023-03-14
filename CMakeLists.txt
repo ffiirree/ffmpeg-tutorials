@@ -38,8 +38,6 @@ if(WIN32)
     add_definitions(-DUNICODE -DNOMINMAX)
 elseif(UNIX AND NOT APPLE)
     find_package(Qt5 COMPONENTS X11Extras REQUIRED)
-
-    find_package(PulseAudio REQUIRED)
 endif()
 
 # #######################################################################################################################
@@ -53,17 +51,13 @@ list(
         Qt5::Widgets Qt5::Gui Qt5::Multimedia
         glog::glog fmt::fmt
         FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter FFmpeg::swscale FFmpeg::swresample
-        $<$<PLATFORM_ID:Linux>:Qt5::X11Extras> $<$<PLATFORM_ID:Linux>:${PULSEAUDIO_LIBRARY}>
+        $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
 )
 
 function(create_exe name source_file)
     add_executable(${name} ${source_file})
     target_link_libraries(${name} PRIVATE ${LIBS})
     target_include_directories(${name} PRIVATE utils)
-
-    if(UNIX AND NOT APPLE)
-        target_include_directories(${name} PRIVATE ${PULSEAUDIO_INCLUDE_DIR})
-    endif()
 endfunction(create_exe)
 
 create_exe(remuxing 01_remuxing/remuxing.cpp)
@@ -82,3 +76,4 @@ add_subdirectory(10_streaming)
 add_subdirectory(11_wasapi_capture)
 add_subdirectory(12_wasapi_render)
 add_subdirectory(15_linux_pulse)
+add_subdirectory(16_linux_v4l2)

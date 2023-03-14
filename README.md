@@ -39,6 +39,9 @@ chmod +x qt-opensource-linux-x64-5.12.12.run
 # pulse
 sudo apt install libpulse-dev
 
+# v4l2
+sudo apt install libv4l-dev v4l-utils
+
 # for error: GL/gl.h: No such file or directory
 sudo apt install mesa-common-dev
 ```
