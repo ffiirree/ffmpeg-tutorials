@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 project(ffmpeg_examples VERSION 0.0.1 LANGUAGES C CXX)
 
@@ -10,9 +10,9 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 endif()
 
-########################################################################################################################
+# #######################################################################################################################
 # dependencies
-########################################################################################################################
+# #######################################################################################################################
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
 
 # 3rdparty: glog fmt
@@ -38,12 +38,13 @@ if(WIN32)
     add_definitions(-DUNICODE -DNOMINMAX)
 elseif(UNIX AND NOT APPLE)
     find_package(Qt5 COMPONENTS X11Extras REQUIRED)
+
+    find_package(PulseAudio REQUIRED)
 endif()
 
-########################################################################################################################
+# #######################################################################################################################
 # Create the executable files
-########################################################################################################################
-
+# #######################################################################################################################
 add_definitions(-D__STDC_CONSTANT_MACROS)
 
 list(
@@ -52,13 +53,17 @@ list(
         Qt5::Widgets Qt5::Gui Qt5::Multimedia
         glog::glog fmt::fmt
         FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter FFmpeg::swscale FFmpeg::swresample
-        $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
+        $<$<PLATFORM_ID:Linux>:Qt5::X11Extras> $<$<PLATFORM_ID:Linux>:${PULSEAUDIO_LIBRARY}>
 )
 
 function(create_exe name source_file)
     add_executable(${name} ${source_file})
     target_link_libraries(${name} PRIVATE ${LIBS})
     target_include_directories(${name} PRIVATE utils)
+
+    if(UNIX AND NOT APPLE)
+        target_include_directories(${name} PRIVATE ${PULSEAUDIO_INCLUDE_DIR})
+    endif()
 endfunction(create_exe)
 
 create_exe(remuxing 01_remuxing/remuxing.cpp)
@@ -76,3 +81,4 @@ add_subdirectory(09_media_player)
 add_subdirectory(10_streaming)
 add_subdirectory(11_wasapi_capture)
 add_subdirectory(12_wasapi_render)
+add_subdirectory(15_linux_pulse)

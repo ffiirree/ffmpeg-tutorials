@@ -91,7 +91,7 @@ An application can access DXGI directly, or call the Direct3D APIs in D3D11_1.h,
 
 Windows 8 disables standard Windows 2000 Display Driver Model (XDDM) mirror drivers and offers the `desktop duplication API` instead. The desktop duplication API provides remote access to a desktop image for collaboration scenarios. **Apps can use the desktop duplication API to access frame-by-frame updates to the desktop**. Because apps receive updates to the desktop image in a DXGI surface, the apps can use the full power of the GPU to process the image updates.
 
-## 屏幕采集方法
+## Windows 屏幕采集方法
 
 - `GDI`: 兼容各版本的Windows，占用大量CPU资源，性能差，鼠标需要单采，无法实现过滤制定窗口
 - `DXGI`: Windows 8及后续版本，性能最好

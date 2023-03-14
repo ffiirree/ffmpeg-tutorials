@@ -1,6 +1,8 @@
 #ifndef FFMPEG_EXAMPLES_DEFER_H
 #define FFMPEG_EXAMPLES_DEFER_H
 
+#include <utility>
+
 template <typename F> class defer_raii
 {
 public:

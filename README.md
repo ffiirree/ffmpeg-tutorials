@@ -36,6 +36,9 @@ sudo apt install qt5-default libqt5x11extras5-dev qtmultimedia5-dev
 chmod +x qt-opensource-linux-x64-5.12.12.run
 # Double click qt-opensource-linux-x64-5.12.12.run and install
 
+# pulse
+sudo apt install libpulse-dev
+
 # for error: GL/gl.h: No such file or directory
 sudo apt install mesa-common-dev
 ```
@@ -81,6 +84,7 @@ git submodule update
 - [ ] [render audio stream by WASAPI(Windows)](/12_wasapi_render/README.md)
 - [ ] [hardware acceleration](/13_hwaccel/README.md)
 - [ ] [Windows Multimedia](/14_windows_mm/README.md)
+- [ ] [Linux PulseAudio](/15_linux_pulse/README.md)
 
 ## References
 
