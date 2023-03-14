@@ -29,7 +29,7 @@ bool MediaDecoder::open(const std::string& name,
     avdevice_register_all();
 
     // input format
-    AVInputFormat* input_fmt = nullptr;
+    const AVInputFormat* input_fmt = nullptr;
     if (!format.empty()) {
         input_fmt = av_find_input_format(format.c_str());
         if (!input_fmt) {
@@ -69,14 +69,14 @@ bool MediaDecoder::open(const std::string& name,
 
     // decoder
     if (video_stream_index_ >= 0) {
-        video_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[video_stream_index_]->codecpar->codec_id);
-        if (!video_decoder_) {
+        auto video_decoder = avcodec_find_decoder(fmt_ctx_->streams[video_stream_index_]->codecpar->codec_id);
+        if (!video_decoder) {
             LOG(ERROR) << "avcodec_find_decoder() for video";
             return false;
         }
 
         // video decoder context
-        video_decoder_ctx_ = avcodec_alloc_context3(video_decoder_);
+        video_decoder_ctx_ = avcodec_alloc_context3(video_decoder);
         if (!video_decoder_ctx_) {
             LOG(ERROR) << "avcodec_alloc_context3";
             return false;
@@ -91,7 +91,7 @@ bool MediaDecoder::open(const std::string& name,
         AVDictionary* decoder_options = nullptr;
         defer(av_dict_free(&decoder_options));
         av_dict_set(&decoder_options, "threads", "auto", 0);
-        if (avcodec_open2(video_decoder_ctx_, video_decoder_, &decoder_options) < 0) {
+        if (avcodec_open2(video_decoder_ctx_, video_decoder, &decoder_options) < 0) {
             LOG(ERROR) << "avcodec_open2 failed for video\n";
             return false;
         }
@@ -110,13 +110,13 @@ bool MediaDecoder::open(const std::string& name,
 
     //  audio decoder context
     if (audio_stream_index_ >= 0) {
-        audio_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[audio_stream_index_]->codecpar->codec_id);
-        if (!audio_decoder_) {
+        auto audio_decoder = avcodec_find_decoder(fmt_ctx_->streams[audio_stream_index_]->codecpar->codec_id);
+        if (!audio_decoder) {
             LOG(ERROR) << "avcodec_find_decoder() for audio";
             return false;
         }
 
-        audio_decoder_ctx_ = avcodec_alloc_context3(audio_decoder_);
+        audio_decoder_ctx_ = avcodec_alloc_context3(audio_decoder);
         if (!audio_decoder_ctx_) {
             LOG(ERROR) << "avcodec_alloc_context3 failed for audio";
             return false;
@@ -127,7 +127,7 @@ bool MediaDecoder::open(const std::string& name,
             return false;
         }
 
-        if (avcodec_open2(audio_decoder_ctx_, audio_decoder_, nullptr) < 0) {
+        if (avcodec_open2(audio_decoder_ctx_, audio_decoder, nullptr) < 0) {
             LOG(ERROR) << "avcodec_open2 failed for audio";
             return false;
         }

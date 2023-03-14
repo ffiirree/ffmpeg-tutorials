@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     }
 
     // encoder
-    AVCodec *encoder = avcodec_find_encoder_by_name("libx264");
+    auto encoder = avcodec_find_encoder_by_name("libx264");
     if (!encoder) {
         fprintf(stderr, "encoder: avcodec_find_encoder_by_name()\n");
         return -1;

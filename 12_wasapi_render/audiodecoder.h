@@ -75,7 +75,6 @@ private:
     int audio_stream_index_{ -1 };
 
     AVCodecContext* audio_decoder_ctx_{ nullptr };
-    AVCodec* audio_decoder_{ nullptr };
 
     AVPacket* packet_{ nullptr };
     AVFrame* decoded_frame_{ nullptr };

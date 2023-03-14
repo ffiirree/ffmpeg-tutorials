@@ -52,7 +52,6 @@ private:
     int video_stream_index_{ -1 };
 
     AVCodecContext* video_decoder_ctx_{ nullptr };
-    AVCodec* video_decoder_{ nullptr };
 
     AVPixelFormat pix_fmt_{ AV_PIX_FMT_YUV420P };
 

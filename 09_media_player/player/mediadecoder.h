@@ -86,8 +86,6 @@ private:
 
     AVCodecContext* video_decoder_ctx_{ nullptr };
     AVCodecContext* audio_decoder_ctx_{ nullptr };
-    AVCodec* video_decoder_{ nullptr };
-    AVCodec* audio_decoder_{ nullptr };
 
     AVPixelFormat pix_fmt_{ AV_PIX_FMT_YUV420P };
 

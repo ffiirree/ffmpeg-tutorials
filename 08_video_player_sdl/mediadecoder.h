@@ -53,7 +53,6 @@ private:
     int video_stream_index_{ -1 };
 
     AVCodecContext* video_decoder_ctx_{ nullptr };
-    AVCodec* video_decoder_{ nullptr };
 
     AVPacket* packet_{ nullptr };
 

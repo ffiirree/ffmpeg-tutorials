@@ -53,7 +53,7 @@ public:
         CHECK(video_stream_idx_ >= 0 || audio_stream_idx_ >= 0);
 
         // decoder
-        video_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[video_stream_idx_]->codecpar->codec_id);
+        auto video_decoder = avcodec_find_decoder(fmt_ctx_->streams[video_stream_idx_]->codecpar->codec_id);
         CHECK_NOTNULL(video_decoder_);
 
         // decoder context

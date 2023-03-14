@@ -18,7 +18,7 @@ bool MediaDecoder::open(const std::string& name,
     CHECK_NOTNULL(fmt_ctx_ = avformat_alloc_context());
 
     // input format
-    AVInputFormat* input_fmt = nullptr;
+    const AVInputFormat* input_fmt = nullptr;
     if (!format.empty()) {
         CHECK_NOTNULL(input_fmt = av_find_input_format(format.c_str()));
     }
@@ -41,16 +41,17 @@ bool MediaDecoder::open(const std::string& name,
     CHECK(video_stream_index_ >= 0);
 
     // decoder
-    CHECK_NOTNULL( video_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[video_stream_index_]->codecpar->codec_id));
+    const AVCodec* video_decoder = nullptr;
+    CHECK_NOTNULL(video_decoder = avcodec_find_decoder(fmt_ctx_->streams[video_stream_index_]->codecpar->codec_id));
     // video decoder context
-    CHECK_NOTNULL(video_decoder_ctx_ = avcodec_alloc_context3(video_decoder_));
+    CHECK_NOTNULL(video_decoder_ctx_ = avcodec_alloc_context3(video_decoder));
     CHECK(avcodec_parameters_to_context(video_decoder_ctx_, fmt_ctx_->streams[video_stream_index_]->codecpar) >= 0);
 
     // open codec
     AVDictionary* decoder_options = nullptr;
     defer(av_dict_free(&decoder_options));
     av_dict_set(&decoder_options, "threads", "auto", 0);
-    CHECK(avcodec_open2(video_decoder_ctx_, video_decoder_, &decoder_options) >= 0);
+    CHECK(avcodec_open2(video_decoder_ctx_, video_decoder, &decoder_options) >= 0);
 
 
     LOG(INFO) << fmt::format("[DECODER] FRAMERATE = {}, CFR = {}, STREAM_TIMEBASE = {}/{}",

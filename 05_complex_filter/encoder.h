@@ -46,9 +46,9 @@ public:
         CHECK_NOTNULL(avformat_new_stream(fmt_ctx_, nullptr));
         video_stream_idx_ = 0;
 
-        video_encoder_ = avcodec_find_encoder_by_name("libx265");
-        CHECK_NOTNULL(video_encoder_);
-        video_encode_ctx_ = avcodec_alloc_context3(video_encoder_);
+        auto video_encoder = avcodec_find_encoder_by_name("libx265");
+        CHECK_NOTNULL(video_encoder);
+        video_encode_ctx_ = avcodec_alloc_context3(video_encoder);
         CHECK_NOTNULL(video_encode_ctx_);
 
         AVDictionary* encoder_options = nullptr;
@@ -71,7 +71,7 @@ public:
             video_encode_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
         }
 
-        CHECK(avcodec_open2(video_encode_ctx_, video_encoder_, &encoder_options) >= 0);
+        CHECK(avcodec_open2(video_encode_ctx_, video_encoder, &encoder_options) >= 0);
         CHECK(avcodec_parameters_from_context(fmt_ctx_->streams[video_stream_idx_]->codecpar, video_encode_ctx_) >= 0);
 
         if(!(fmt_ctx_->oformat->flags & AVFMT_NOFILE)) {
@@ -124,9 +124,6 @@ public:
     AVFormatContext * fmt_ctx_{nullptr};
     AVCodecContext * video_encode_ctx_{nullptr};
     AVCodecContext * audio_encode_ctx_{nullptr};
-
-    AVCodec * video_encoder_{nullptr};
-    AVCodec * audio_encoder_{nullptr};
 
     int video_stream_idx_{ 0 };
     int audio_stream_idx_{ -1 };

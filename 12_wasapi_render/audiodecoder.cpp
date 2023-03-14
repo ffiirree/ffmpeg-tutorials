@@ -20,11 +20,12 @@ int AudioDecoder::open(const std::string& name)
     CHECK(audio_stream_index_ >= 0);
 
     //  audio decoder context
-    CHECK_NOTNULL(audio_decoder_ = avcodec_find_decoder(fmt_ctx_->streams[audio_stream_index_]->codecpar->codec_id));
-    CHECK_NOTNULL(audio_decoder_ctx_ = avcodec_alloc_context3(audio_decoder_));
+    const AVCodec* audio_decoder = nullptr;
+    CHECK_NOTNULL(audio_decoder = avcodec_find_decoder(fmt_ctx_->streams[audio_stream_index_]->codecpar->codec_id));
+    CHECK_NOTNULL(audio_decoder_ctx_ = avcodec_alloc_context3(audio_decoder));
 
     CHECK(avcodec_parameters_to_context(audio_decoder_ctx_, fmt_ctx_->streams[audio_stream_index_]->codecpar) >= 0);
-    CHECK(avcodec_open2(audio_decoder_ctx_, audio_decoder_, nullptr) >= 0);
+    CHECK(avcodec_open2(audio_decoder_ctx_, audio_decoder, nullptr) >= 0);
 
     LOG(INFO) << fmt::format("[DECODER] SAMPLE_RATE = {}, CHANNELS = {}, CHANNEL_LAYOUT = {}, SAMPLE_FMT = {}",
                              sample_rate(), channels(),

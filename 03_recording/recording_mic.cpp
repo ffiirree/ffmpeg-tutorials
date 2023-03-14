@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     CHECK(audio_stream_idx >= 0);
 
     // decoder
-    AVCodec* decoder = avcodec_find_decoder(decoder_fmt_ctx->streams[audio_stream_idx]->codecpar->codec_id);
+    auto decoder = avcodec_find_decoder(decoder_fmt_ctx->streams[audio_stream_idx]->codecpar->codec_id);
     CHECK_NOTNULL(decoder);
 
     // decoder context
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(avformat_new_stream(encoder_fmt_ctx, nullptr));
 
     // encoder
-    AVCodec *encoder = avcodec_find_encoder_by_name("aac");
+    auto encoder = avcodec_find_encoder_by_name("aac");
     CHECK_NOTNULL(encoder);
     AVCodecContext *encoder_ctx = avcodec_alloc_context3(encoder);
     CHECK_NOTNULL(encoder_ctx);
