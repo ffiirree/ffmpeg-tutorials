@@ -52,6 +52,7 @@ list(
         glog::glog fmt::fmt
         FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter FFmpeg::swscale FFmpeg::swresample
         $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
+        $<$<PLATFORM_ID:Windows>:strmiids>
 )
 
 function(create_exe name source_file)
@@ -66,6 +67,7 @@ create_exe(recording 03_recording/recording.cpp)
 create_exe(recording_mic 03_recording/recording_mic.cpp)
 create_exe(filter 04_simple_filter/filter.cpp)
 create_exe(cuda_decode 13_hwaccel/cuda_decode.cpp)
+create_exe(dshow 17_win_dshow/main.cpp)
 
 add_subdirectory(05_complex_filter)
 add_subdirectory(07_audio_player)

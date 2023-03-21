@@ -20,7 +20,7 @@ std::string wchar_to_utf8(const wchar_t * ptr, size_t len)
 
     char *buffer = new char[u8len + 1] { 0 }; defer(delete []buffer);
 
-    u8len = try_wchar_to_utf8_ptr(ptr, len, buffer, u8len + 1);
+    try_wchar_to_utf8_ptr(ptr, len, buffer, u8len + 1);
     buffer[u8len] = 0;
 
     return { buffer, u8len };

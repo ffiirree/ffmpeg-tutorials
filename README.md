@@ -89,6 +89,7 @@ git submodule update
 - [ ] [Windows Multimedia](/14_windows_mm/README.md)
 - [ ] [Linux PulseAudio](/15_linux_pulse/README.md)
 - [ ] [Linux V4L2](/16_linux_v4l2/README.md)
+- [ ] [Windows DirectShow](/17_win_dshow/README.md)
 
 ## References
 
