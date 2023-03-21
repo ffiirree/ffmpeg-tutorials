@@ -29,7 +29,11 @@ bool MediaDecoder::open(const std::string& name,
     avdevice_register_all();
 
     // input format
+#if LIBAVFORMAT_VERSION_MAJOR >= 59
     const AVInputFormat* input_fmt = nullptr;
+#else
+    AVInputFormat* input_fmt = nullptr;
+#endif
     if (!format.empty()) {
         input_fmt = av_find_input_format(format.c_str());
         if (!input_fmt) {

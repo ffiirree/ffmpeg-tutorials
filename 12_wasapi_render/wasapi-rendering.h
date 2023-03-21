@@ -53,6 +53,8 @@ public:
         running_ = true;
         callback_ = cb;
         thread_ = std::thread([this]() { render_f(); });
+
+        return 0;
     }
 
     int sample_rate() const { return sample_rate_; }
