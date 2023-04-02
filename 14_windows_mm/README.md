@@ -94,9 +94,11 @@ Windows 8 disables standard Windows 2000 Display Driver Model (XDDM) mirror driv
 ## Windows 屏幕采集方法
 
 - `GDI`: 兼容各版本的Windows，占用大量CPU资源，性能差，鼠标需要单采，无法实现过滤制定窗口
-- `DXGI`: Windows 8及后续版本，性能最好
+- `DXGI`: Windows 8 及后续版本，性能好
 - `Magnification`: 能实现放大缩小颜色转换等操作，能过滤窗口
-- `Window Graphics Capturer`: 效率高，拓展屏采集支持高，1080p采集消耗GPU达到个位数
+- `Window Graphics Capture`: Windows 10 1803 及后续版本；效率高，拓展屏采集支持高，1080p采集消耗GPU达到个位数
+
+> 目前看来 `GDI + WGC` 的组合是最好的，在支持WGC的高版本系统上使用WGC，否则使用GDI，这样就可以覆盖所有版本的系统
 
 ### OBS Studio 画面捕获实现
 
@@ -125,3 +127,6 @@ OBS Studio 在Windows上提供了三种捕获模式：
 - [录屏采集实现教程——Windows桌面端](https://juejin.cn/post/6975094080904790052)
 - [Desktop Duplication API](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/desktop-dup-api)
 - [WDDM](https://learn.microsoft.com/en-us/windows-hardware/drivers/display/windows-vista-display-driver-model-design-guide)
+- [New Ways to do Screen Capture](https://blogs.windows.com/windowsdeveloper/2019/09/16/new-ways-to-do-screen-capture/)
+- [Win32CaptureSample](https://github.com/robmikh/Win32CaptureSample)
+- [Windows.Graphics.Capture](https://learn.microsoft.com/en-us/uwp/api/windows.graphics.capture?view=winrt-22621)
