@@ -16,12 +16,7 @@ int main(int argc, char* argv[])
     const char * in_filename = argv[1];
     const char * out_filename = argv[2];
 
-    AVFormatContext * decoder_fmt_ctx = avformat_alloc_context();
-    if (!decoder_fmt_ctx) {
-        fprintf(stderr, "avformat_alloc_context()\n");
-        return -1;
-    }
-
+    AVFormatContext * decoder_fmt_ctx = nullptr;
     if (avformat_open_input(&decoder_fmt_ctx, in_filename, nullptr, nullptr) < 0) {
         fprintf(stderr, "avformat_open_input()\n");
         return -1;
@@ -177,7 +172,7 @@ int main(int argc, char* argv[])
 
                 out_packet->stream_index = 0;
                 av_packet_rescale_ts(out_packet, decoder_fmt_ctx->streams[video_stream_idx]->time_base, encoder_fmt_ctx->streams[0]->time_base);
-                printf(" -- [ENCODING] frame = %d, pts = %lld, dts = %lld, duration = %lld\n", encoder_ctx->frame_number, out_packet->pts, out_packet->dts, out_packet->duration);
+                printf(" -- [ENCODING] frame = %d, pts = %ld, dts = %ld, duration = %ld\n", encoder_ctx->frame_number, out_packet->pts, out_packet->dts, out_packet->duration);
 
                 if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {
                     fprintf(stderr, "encoder: av_interleaved_write_frame()\n");

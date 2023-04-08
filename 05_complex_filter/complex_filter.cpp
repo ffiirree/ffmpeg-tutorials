@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 
     filter.running_ = true;
     while(filter.running_) {
-        for(int i = 0; i < decoders.size(); i++) {
+        for(size_t i = 0; i < decoders.size(); i++) {
             if (decoders[i]->video_frame_buffer_.empty()) {
                 if (!decoders[i]->eof())
                     av_usleep(20000);

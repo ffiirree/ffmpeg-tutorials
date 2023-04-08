@@ -9,7 +9,7 @@ static std::mutex pulse_mtx;
 static pa_threaded_mainloop *pulse_loop = nullptr;
 static pa_context *pulse_ctx = nullptr;
 
-static void pulse_context_state_callback(pa_context *ctx, void *userdata)
+static void pulse_context_state_callback(pa_context *ctx, void *)
 {
     switch (pa_context_get_state(ctx))
     {
@@ -53,7 +53,7 @@ static const char *pulse_source_state_to_string(int state)
     }
 }
 
-static void pulse_source_info_callback(pa_context *ctx, const pa_source_info *i, int eol, void *userdata)
+static void pulse_source_info_callback(pa_context *, const pa_source_info *i, int eol, void *)
 {
     if (eol == 0)
     {
@@ -66,7 +66,7 @@ static void pulse_source_info_callback(pa_context *ctx, const pa_source_info *i,
     pulse_signal(0);
 }
 
-static void pulse_sink_info_callback(pa_context *ctx, const pa_sink_info *i, int eol, void *userdata)
+static void pulse_sink_info_callback(pa_context *, const pa_sink_info *i, int eol, void *)
 {
     if (eol == 0)
     {

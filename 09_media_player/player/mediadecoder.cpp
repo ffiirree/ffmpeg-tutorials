@@ -20,12 +20,6 @@ bool MediaDecoder::open(const std::string& name,
         close();
     }
 
-    // format context
-    fmt_ctx_ = avformat_alloc_context();
-    if (!fmt_ctx_) {
-        return false;
-    }
-
     avdevice_register_all();
 
     // input format

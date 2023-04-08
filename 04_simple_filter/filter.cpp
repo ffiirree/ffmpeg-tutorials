@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     const char * in_filename = argv[1];
     const char * out_filename = argv[2];
 
-    AVFormatContext* decoder_fmt_ctx = avformat_alloc_context();
+    AVFormatContext* decoder_fmt_ctx = nullptr;
     CHECK(avformat_open_input(&decoder_fmt_ctx, in_filename, nullptr, nullptr) >= 0);
     defer(avformat_close_input(&decoder_fmt_ctx));
 

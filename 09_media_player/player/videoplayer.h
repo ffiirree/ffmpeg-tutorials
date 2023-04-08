@@ -19,7 +19,7 @@ public:
     bool play(const std::string& name, const std::string& fmt = "", const std::string& filter_descr = "");
 
 protected:
-    void paintEvent(QPaintEvent* event) override
+    void paintEvent(QPaintEvent*) override
     {
         std::lock_guard lock(mtx_);
 

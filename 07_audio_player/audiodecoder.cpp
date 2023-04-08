@@ -7,8 +7,6 @@ int AudioDecoder::open(const std::string& name)
         destroy();
     }
 
-    // format context
-    CHECK_NOTNULL(fmt_ctx_ = avformat_alloc_context());
     // open input
     CHECK(avformat_open_input(&fmt_ctx_, name.c_str(), nullptr, nullptr) >= 0);
     CHECK(avformat_find_stream_info(fmt_ctx_, nullptr) >= 0);

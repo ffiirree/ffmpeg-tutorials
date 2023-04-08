@@ -3,7 +3,7 @@
 #include "linux-v4l2.h"
 
 // v4l2-ctl --all
-int main(int argc, char *argv[])
+int main(int, char *[])
 {
     auto devices = v4l2_device_list();
 

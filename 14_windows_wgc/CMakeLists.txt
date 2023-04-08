@@ -1,4 +1,5 @@
 if(WIN32)
+    message(STATUS "FFMPEG-EXAMPLES : Windows API version is ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
     file(GLOB_RECURSE AM_SOURCES *.cpp)
 
     add_executable(wgc ${AM_SOURCES})

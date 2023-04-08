@@ -66,4 +66,6 @@ The Windows Multimedia Device (MMDevice) API enables audio clients to discover a
 
 ## References
 
-录制Windows系统声音, [Core Audio APIs/WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi).
+- [About WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi)
+- [WASAPI : Capturing a Stream](https://learn.microsoft.com/en-us/windows/win32/coreaudio/capturing-a-stream)
+- [WASAPI : Loopback Recording](hhttps://learn.microsoft.com/en-us/windows/win32/coreaudio/loopback-recording)

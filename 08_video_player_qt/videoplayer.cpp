@@ -7,7 +7,7 @@ VideoPlayer::VideoPlayer(QWidget* parent)
 
     frame_ = av_frame_alloc();
     decoder_ = std::make_unique<MediaDecoder>();
-    decoder_->set_video_callback([=](AVFrame * frame) {
+    decoder_->set_video_callback([=, this](AVFrame * frame) {
         mtx_.lock();
         if(frame_) {
             av_frame_unref(frame_);

@@ -59,7 +59,7 @@ std::vector<V4l2Device> v4l2_device_list()
 
 void v4l2_input_list(int device)
 {
-    struct v4l2_input input = {0};
+    struct v4l2_input input{};
     while (v4l2_ioctl(device, VIDIOC_ENUMINPUT, &input) == 0)
     {
         LOG(INFO) << fmt::format("fd {}: found input '{}' (Index {})",
@@ -70,7 +70,7 @@ void v4l2_input_list(int device)
 
 void v4l2_format_list(int device)
 {
-    struct v4l2_fmtdesc fmt = {0};
+    struct v4l2_fmtdesc fmt{};
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
     while (v4l2_ioctl(device, VIDIOC_ENUM_FMT, &fmt) == 0)
@@ -89,7 +89,7 @@ void v4l2_format_list(int device)
 
 void v4l2_standard_list(int device)
 {
-    struct v4l2_standard std = {0};
+    struct v4l2_standard std{};
 
     while (v4l2_ioctl(device, VIDIOC_ENUMSTD, &std) == 0)
     {
@@ -101,7 +101,7 @@ void v4l2_standard_list(int device)
 
 void v4l2_resolution_list(int device, uint32_t pix_fmt)
 {
-    struct v4l2_frmsizeenum frmsize = {0};
+    struct v4l2_frmsizeenum frmsize{};
     frmsize.pixel_format = pix_fmt;
 
     v4l2_ioctl(device, VIDIOC_ENUM_FRAMESIZES, &frmsize);
@@ -127,7 +127,7 @@ void v4l2_resolution_list(int device, uint32_t pix_fmt)
 
 void v4l2_framerate_list(int device, uint32_t pix_fmt, uint32_t w, uint32_t h)
 {
-    struct v4l2_frmivalenum frmival = {0};
+    struct v4l2_frmivalenum frmival{};
     frmival.width = w;
     frmival.height = h;
     frmival.pixel_format = pix_fmt;
@@ -152,7 +152,7 @@ void v4l2_framerate_list(int device, uint32_t pix_fmt, uint32_t w, uint32_t h)
 
 static void v4l2_update_controls_menu(uint32_t device, struct v4l2_queryctrl *qctrl)
 {
-    struct v4l2_querymenu qmenu = {0};
+    struct v4l2_querymenu qmenu{};
     qmenu.id = qctrl->id;
 
     for (qmenu.index = qctrl->minimum; qmenu.index <= (uint32_t)qctrl->maximum; qmenu.index += qctrl->step)
@@ -167,7 +167,7 @@ static void v4l2_update_controls_menu(uint32_t device, struct v4l2_queryctrl *qc
 
 void v4l2_controls(uint32_t device)
 {
-    struct v4l2_queryctrl qctrl = {0};
+    struct v4l2_queryctrl qctrl{};
     qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 
     while (v4l2_ioctl(device, VIDIOC_QUERYCTRL, &qctrl) == 0)
@@ -181,6 +181,7 @@ void v4l2_controls(uint32_t device)
         case V4L2_CTRL_TYPE_BOOLEAN:
             LOG(INFO) << fmt::format("V4L2_CTRL_TYPE_BOOLEAN : name = {}, default = {}",
                                      reinterpret_cast<const char *>(qctrl.name), qctrl.default_value);
+            break;
         case V4L2_CTRL_TYPE_MENU:
         case V4L2_CTRL_TYPE_INTEGER_MENU:
             LOG(INFO) << "V4L2_CTRL_TYPE_MENU : name = " << qctrl.name << ", default index = " << qctrl.default_value;

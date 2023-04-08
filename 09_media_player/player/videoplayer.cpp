@@ -13,7 +13,7 @@ VideoPlayer::VideoPlayer(QWidget* parent)
 
     audio_player_ = new AudioPlayer(this);
 
-    decoder_->set_video_callback([=](AVFrame * frame) {
+    decoder_->set_video_callback([=, this](AVFrame * frame) {
         mtx_.lock();
         if(frame_) {
             av_frame_unref(frame_);
@@ -24,10 +24,10 @@ VideoPlayer::VideoPlayer(QWidget* parent)
         QWidget::update();
     });
 
-    decoder_->set_audio_callback([=](RingBuffer& buffer) -> std::pair<int64_t, bool> {
+    decoder_->set_audio_callback([=, this](RingBuffer& buffer) -> std::pair<int64_t, bool> {
         bool ok = false;
 
-        if (buffer.continuous_size() >= audio_player_->period_size() &&
+        if ((buffer.continuous_size() >= static_cast<size_t>(audio_player_->period_size())) &&
             audio_player_->buffer_free_size() >= audio_player_->period_size()) {
 
             size_t read_size = audio_player_->period_size();

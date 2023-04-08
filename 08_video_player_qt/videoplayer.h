@@ -18,11 +18,11 @@ public:
     bool play(const std::string& name, const std::string& fmt = "", const std::string& filter_descr = "");
 
 protected:
-    void paintEvent(QPaintEvent* event) override
+    void paintEvent(QPaintEvent*) override
     {
         std::lock_guard lock(mtx_);
 
-        if(frame_ && frame_->format == AV_PIX_FMT_RGB24) {
+        if (frame_ && (frame_->format == AV_PIX_FMT_RGB24)){
             QPainter painter(this);
             painter.drawImage(rect(), QImage(static_cast<const uchar*>(frame_->data[0]), frame_->width, frame_->height, QImage::Format_RGB888));
         }

@@ -2,13 +2,13 @@
 
 ## CMake
 
-Download from [CMake](https://cmake.org/download/) and install on **Windows**.
+Download from [CMake](https://cmake.org/download/) and install it on **Windows**.
 
 ## MSYS2
 
 ### Installation
 
-Download from [MSYS2](https://www.msys2.org/) and install.
+Download from [MSYS2](https://www.msys2.org/) and install it.
 
 ### ASM
 

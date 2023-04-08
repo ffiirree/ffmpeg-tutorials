@@ -30,9 +30,7 @@ int main(int argc, char* argv[])
     avdevice_register_all();
 
     // INPUT @{
-    AVFormatContext * decoder_fmt_ctx = avformat_alloc_context();
-    CHECK_NOTNULL(decoder_fmt_ctx);
-
+    AVFormatContext * decoder_fmt_ctx =  nullptr;
     CHECK(avformat_open_input(&decoder_fmt_ctx, input, av_find_input_format(input_format), nullptr) >= 0);
     CHECK(avformat_find_stream_info(decoder_fmt_ctx, nullptr) >= 0);
     int video_stream_idx = av_find_best_stream(decoder_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);

@@ -21,9 +21,7 @@ int main(int argc, char* argv[])
     const char * in_filename = argv[1];
     const char * rtmp_name = argv[2];
 
-    AVFormatContext * decoder_fmt_ctx = avformat_alloc_context();
-    CHECK_NOTNULL(decoder_fmt_ctx);
-
+    AVFormatContext * decoder_fmt_ctx = nullptr;
     CHECK(avformat_open_input(&decoder_fmt_ctx, in_filename, nullptr, nullptr) >= 0);
     CHECK(avformat_find_stream_info(decoder_fmt_ctx, nullptr) >= 0);
 

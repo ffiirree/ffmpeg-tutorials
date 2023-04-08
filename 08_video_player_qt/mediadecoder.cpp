@@ -19,9 +19,6 @@ bool MediaDecoder::open(const std::string& name,
 
     avdevice_register_all();
 
-    // format context
-    CHECK_NOTNULL(fmt_ctx_ = avformat_alloc_context());
-
     // input format
 #if LIBAVFORMAT_VERSION_MAJOR >= 59
     const AVInputFormat* input_fmt = nullptr;

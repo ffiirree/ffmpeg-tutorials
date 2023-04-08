@@ -155,7 +155,7 @@ public:
     bool continuous()
     {
         std::lock_guard<std::mutex> lock(mtx_);
-        return w_idx_ > r_idx_ || r_idx_ == w_idx_ == 0;
+        return (w_idx_ > r_idx_) || ((r_idx_ == w_idx_) && (r_idx_ == 0));
     }
 
     bool continuous_free()

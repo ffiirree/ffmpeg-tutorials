@@ -43,8 +43,6 @@ public:
 
     int open(const std::string& filename)
     {
-        fmt_ctx_ = avformat_alloc_context();
-
         CHECK(avformat_open_input(&fmt_ctx_, filename.c_str(), nullptr, nullptr) >= 0);
         CHECK(avformat_find_stream_info(fmt_ctx_, nullptr) >= 0);
 

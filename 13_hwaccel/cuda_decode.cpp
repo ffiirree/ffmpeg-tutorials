@@ -4,16 +4,17 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/timestamp.h>
 #include <libavutil/opt.h>
+#include <libavutil/pixdesc.h>
 }
 #include "logging.h"
 #include "fmt/format.h"
 #include "defer.h"
 
-enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts)
+enum AVPixelFormat get_hw_format(AVCodecContext *, const enum AVPixelFormat *pix_fmts)
 {
     const enum AVPixelFormat *p;
 
-    for (p = pix_fmts; *p != -1; p++) {
+    for (p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
         if (*p == AV_PIX_FMT_CUDA)
             return *p;
     }
@@ -38,9 +39,7 @@ int main(int argc, char* argv[])
     const char * in_filename = argv[1];
     const char * out_filename = argv[2];
 
-    AVFormatContext * decoder_fmt_ctx = avformat_alloc_context();
-    CHECK_NOTNULL(decoder_fmt_ctx);
-
+    AVFormatContext * decoder_fmt_ctx = nullptr;
     CHECK(avformat_open_input(&decoder_fmt_ctx, in_filename, nullptr, nullptr) >= 0);
     defer(avformat_close_input(&decoder_fmt_ctx));
     CHECK(avformat_find_stream_info(decoder_fmt_ctx, nullptr) >= 0);
@@ -63,7 +62,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    LOG(INFO) << "pix_fmt : " << hw_pix_fmt;
+    LOG(INFO) << "hardware pixel format : " << av_get_pix_fmt_name(hw_pix_fmt);
 
     // decoder context
     AVCodecContext * decoder_ctx = avcodec_alloc_context3(decoder);
@@ -77,12 +76,14 @@ int main(int argc, char* argv[])
     AVBufferRef *hw_device_ctx = nullptr;
     CHECK(av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, nullptr, nullptr, 0) >= 0);
     decoder_ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    defer(av_buffer_unref(&hw_device_ctx));
 
     CHECK(avcodec_open2(decoder_ctx, decoder, nullptr) >= 0);
 
     av_dump_format(decoder_fmt_ctx, 0, in_filename, 0);
-    LOG(INFO) << fmt::format("[ INPUT] {}x{}, fps: {}/{}, tbr: {}/{}, tbc: {}/{}, tbn: {}/{}",
+    LOG(INFO) << fmt::format("[ INPUT] {}x{}, format: {}, fps: {}/{}, tbr: {}/{}, tbc: {}/{}, tbn: {}/{}",
                              decoder_ctx->width, decoder_ctx->height,
+                             av_get_pix_fmt_name(decoder_ctx->pix_fmt),
                              decoder_fmt_ctx->streams[video_stream_idx]->avg_frame_rate.num, decoder_fmt_ctx->streams[video_stream_idx]->avg_frame_rate.den,
                              decoder_fmt_ctx->streams[video_stream_idx]->r_frame_rate.num, decoder_fmt_ctx->streams[video_stream_idx]->r_frame_rate.den,
                              decoder_ctx->time_base.num, decoder_ctx->time_base.den,
@@ -129,8 +130,9 @@ int main(int argc, char* argv[])
     CHECK(avformat_write_header(encoder_fmt_ctx, nullptr) >= 0);
 
     av_dump_format(encoder_fmt_ctx, 0, out_filename, 1);
-    LOG(INFO) << fmt::format("[OUTPUT] {}x{}, framerate: {}/{}, tbc: {}/{}, tbn: {}/{}",
+    LOG(INFO) << fmt::format("[OUTPUT] {}x{}, format: {}, framerate: {}/{}, tbc: {}/{}, tbn: {}/{}",
                              encoder_ctx->width, encoder_ctx->height,
+                             av_get_pix_fmt_name(encoder_ctx->pix_fmt),
                              encoder_ctx->framerate.num, encoder_ctx->framerate.den,
                              encoder_ctx->time_base.num, encoder_ctx->time_base.den,
                              encoder_fmt_ctx->streams[0]->time_base.num, encoder_fmt_ctx->streams[0]->time_base.den);
