@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <any>
 #include <regex>
@@ -257,6 +258,12 @@ namespace args
                 }
             }
             return std::nullopt;
+        }
+
+        template<Supported T>
+        T get(const std::string& key, const T& dft)
+        {
+            return get<T>(key).value_or(dft);
         }
 
         static std::optional<std::pair<std::string, std::string>> parse_pair(const std::string& str)
