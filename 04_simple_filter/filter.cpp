@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
     // filters @{
     AVFilterGraph * filter_graph = avfilter_graph_alloc();
     CHECK_NOTNULL(filter_graph);
+    defer(avfilter_graph_free(&filter_graph));
 
     const AVFilter *buffersrc = avfilter_get_by_name("buffer");
     CHECK_NOTNULL(buffersrc);
@@ -113,8 +114,8 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(encoder);
 
     AVCodecContext *encoder_ctx = avcodec_alloc_context3(encoder);
-    defer(avcodec_free_context(&encoder_ctx));
     CHECK_NOTNULL(encoder_ctx);
+    defer(avcodec_free_context(&encoder_ctx));
 
     AVDictionary* encoder_options = nullptr;
     av_dict_set(&encoder_options, "crf", "23", AV_DICT_DONT_OVERWRITE);

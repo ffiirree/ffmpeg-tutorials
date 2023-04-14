@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
     // filters @{
     AVFilterGraph * filter_graph = avfilter_graph_alloc();
     CHECK_NOTNULL(filter_graph);
+    defer(avfilter_graph_free(&filter_graph));
 
     const AVFilter *buffersrc = avfilter_get_by_name("buffer");
     CHECK_NOTNULL(buffersrc);
@@ -96,9 +97,10 @@ int main(int argc, char* argv[])
     CHECK(av_opt_set_int_list(sink_filter_ctx, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN) >= 0);
     CHECK (avfilter_graph_create_filter(&upload_filter_ctx, vflip_filter, "hwupload_cuda", nullptr, nullptr, filter_graph) >= 0);
 
-
-    sink_filter_ctx->hw_device_ctx = av_buffer_ref(device_ref);
-    upload_filter_ctx->hw_device_ctx = av_buffer_ref(device_ref);
+    for(unsigned i = 0; i < filter_graph->nb_filters; ++i) {
+        filter_graph->filters[i]->hw_device_ctx = av_buffer_ref(device_ref);
+        CHECK_NOTNULL(filter_graph->filters[i]->hw_device_ctx);
+    }
 
     CHECK(avfilter_link(src_filter_ctx, 0, upload_filter_ctx, 0) == 0);
     CHECK(avfilter_link(upload_filter_ctx, 0, sink_filter_ctx, 0) == 0);
@@ -126,11 +128,11 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(encoder);
 
     AVCodecContext *encoder_ctx = avcodec_alloc_context3(encoder);
-    defer(avcodec_free_context(&encoder_ctx));
     CHECK_NOTNULL(encoder_ctx);
+    defer(avcodec_free_context(&encoder_ctx));
     encoder_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
 
-    encoder_ctx->hw_frames_ctx = av_buffersink_get_hw_frames_ctx(sink_filter_ctx);
+    encoder_ctx->hw_frames_ctx = av_buffer_ref(av_buffersink_get_hw_frames_ctx(sink_filter_ctx));
     CHECK(encoder_ctx->hw_frames_ctx);
 
     encoder_ctx->hw_device_ctx = av_buffer_ref(device_ref);
@@ -167,10 +169,10 @@ int main(int argc, char* argv[])
             encoder_fmt_ctx->streams[0]->time_base.num, encoder_fmt_ctx->streams[0]->time_base.den);
 
 
-    AVPacket * in_packet = av_packet_alloc();
-    AVFrame * in_frame = av_frame_alloc();
-    AVPacket* out_packet = av_packet_alloc();
-    AVFrame * filtered_frame = av_frame_alloc();
+    AVPacket * in_packet = av_packet_alloc();       defer(av_packet_free(&in_packet));
+    AVFrame * in_frame = av_frame_alloc();          defer(av_frame_free(&in_frame));
+    AVPacket* out_packet = av_packet_alloc();       defer(av_packet_free(&out_packet));
+    AVFrame * filtered_frame = av_frame_alloc();    defer(av_frame_free(&filtered_frame));
     uint64_t counter = 0;
     while(av_read_frame(decoder_fmt_ctx, in_packet) >= 0) {
         if (in_packet->stream_index != video_stream_idx) {
@@ -238,11 +240,6 @@ int main(int argc, char* argv[])
         }
         av_packet_unref(in_packet);
     }
-
-    av_packet_free(&in_packet);
-    av_frame_free(&in_frame);
-    av_packet_free(&out_packet);
-    av_frame_free(&filtered_frame);
 
     av_write_trailer(encoder_fmt_ctx);
     if (encoder_fmt_ctx && !(encoder_fmt_ctx->oformat->flags & AVFMT_NOFILE))
