@@ -19,10 +19,10 @@ int main(int argc, char* argv[])
     Logger::init(argv);
 
     args::parser parser;
-    parser.add("-i", "../hevc.mkv", "input file");
+    parser.add("-i", "../../hevc.mkv", "input file");
     parser.add("--hwaacel", "cuda", "hardware device type");
     parser.add("--encoder", "h264_nvenc", "hardware encoder");
-    parser.add("-o", "hw264.mkv", "output file");
+    parser.add("-o", "hw264.mp4", "output file");
     parser.parse(argc, argv);
 
     std::string in_filename = parser.get<std::string>("i").value();
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(buffersrc);
     const AVFilter *buffersink = avfilter_get_by_name("buffersink");
     CHECK_NOTNULL(buffersink);
-    const AVFilter *vflip_filter = avfilter_get_by_name("hwupload_cuda");
+    const AVFilter *vflip_filter = avfilter_get_by_name("hwupload");
     CHECK_NOTNULL(vflip_filter);
 
     AVStream* video_stream = decoder_fmt_ctx->streams[video_stream_idx];
@@ -88,20 +88,20 @@ int main(int argc, char* argv[])
 
     AVFilterContext *src_filter_ctx = nullptr;
     AVFilterContext *sink_filter_ctx = nullptr;
-    AVFilterContext *vflip_filter_ctx = nullptr;
+    AVFilterContext *upload_filter_ctx = nullptr;
 
     CHECK(avfilter_graph_create_filter(&src_filter_ctx, buffersrc, "src", args.c_str(), nullptr, filter_graph) >= 0);
     enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_CUDA, AV_PIX_FMT_NONE };
     CHECK(avfilter_graph_create_filter(&sink_filter_ctx, buffersink, "sink", nullptr, nullptr, filter_graph) >= 0);
     CHECK(av_opt_set_int_list(sink_filter_ctx, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN) >= 0);
-    CHECK (avfilter_graph_create_filter(&vflip_filter_ctx, vflip_filter, "hwupload_cuda", nullptr, nullptr, filter_graph) >= 0);
+    CHECK (avfilter_graph_create_filter(&upload_filter_ctx, vflip_filter, "hwupload_cuda", nullptr, nullptr, filter_graph) >= 0);
 
 
     sink_filter_ctx->hw_device_ctx = av_buffer_ref(device_ref);
-    vflip_filter_ctx->hw_device_ctx = av_buffer_ref(device_ref);
+    upload_filter_ctx->hw_device_ctx = av_buffer_ref(device_ref);
 
-    CHECK(avfilter_link(src_filter_ctx, 0, vflip_filter_ctx, 0) == 0);
-    CHECK(avfilter_link(vflip_filter_ctx, 0, sink_filter_ctx, 0) == 0);
+    CHECK(avfilter_link(src_filter_ctx, 0, upload_filter_ctx, 0) == 0);
+    CHECK(avfilter_link(upload_filter_ctx, 0, sink_filter_ctx, 0) == 0);
 
     CHECK(avfilter_graph_config(filter_graph, nullptr) >= 0);
     char * graph = avfilter_graph_dump(filter_graph, nullptr);
@@ -130,11 +130,42 @@ int main(int argc, char* argv[])
     CHECK_NOTNULL(encoder_ctx);
     encoder_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
 
+    encoder_ctx->hw_frames_ctx = av_buffersink_get_hw_frames_ctx(sink_filter_ctx);
+    CHECK(encoder_ctx->hw_frames_ctx);
+
+    encoder_ctx->hw_device_ctx = av_buffer_ref(device_ref);
+    CHECK(encoder_ctx->hw_device_ctx);
+
+    // encoder codec params
+    encoder_ctx->height = decoder_ctx->height;
+    encoder_ctx->width = decoder_ctx->width;
+    encoder_ctx->pix_fmt = AV_PIX_FMT_CUDA;
+    encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
+    // time base
+    encoder_ctx->time_base = av_inv_q(av_buffersink_get_frame_rate(sink_filter_ctx));
+    encoder_ctx->framerate = av_buffersink_get_frame_rate(sink_filter_ctx);
+
+    CHECK(avcodec_open2(encoder_ctx, encoder, nullptr) >= 0);
+    CHECK(avformat_new_stream(encoder_fmt_ctx, encoder));
+    CHECK(avcodec_parameters_from_context(encoder_fmt_ctx->streams[0]->codecpar, encoder_ctx) >= 0);
+    encoder_fmt_ctx->streams[0]->time_base = av_inv_q(av_buffersink_get_frame_rate(sink_filter_ctx));
+    encoder_fmt_ctx->streams[0]->avg_frame_rate = av_buffersink_get_frame_rate(sink_filter_ctx);
+
     if(!(encoder_fmt_ctx->oformat->flags & AVFMT_NOFILE)) {
         CHECK(avio_open(&encoder_fmt_ctx->pb, out_filename.c_str(), AVIO_FLAG_WRITE) >= 0);
     }
 
-    bool initialized = false;
+    CHECK(avformat_write_header(encoder_fmt_ctx, nullptr) >= 0);
+
+    av_dump_format(encoder_fmt_ctx, 0, out_filename.c_str(), 1);
+    LOG(INFO) << fmt::format(
+            "[OUTPUT] {}x{}, encoder: {}, format: {}, framerate: {}/{}, tbc: {}/{}, tbn: {}/{}",
+            encoder_ctx->width, encoder_ctx->height, encoder->name,
+            av_get_pix_fmt_name(encoder_ctx->pix_fmt),
+            encoder_ctx->framerate.num, encoder_ctx->framerate.den,
+            encoder_ctx->time_base.num, encoder_ctx->time_base.den,
+            encoder_fmt_ctx->streams[0]->time_base.num, encoder_fmt_ctx->streams[0]->time_base.den);
+
 
     AVPacket * in_packet = av_packet_alloc();
     AVFrame * in_frame = av_frame_alloc();
@@ -158,7 +189,7 @@ int main(int argc, char* argv[])
             }
             // filtering
             if((ret = av_buffersrc_add_frame_flags(src_filter_ctx, in_frame, AV_BUFFERSRC_FLAG_PUSH)) < 0) {
-                fprintf(stderr, "av_buffersrc_add_frame_flags()\n");
+                LOG(ERROR) <<"av_buffersrc_add_frame_flags()";
                 break;
             }
             while(ret >= 0) {
@@ -167,44 +198,8 @@ int main(int argc, char* argv[])
                 if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                     break;
                 } else if (ret < 0) {
-                    fprintf(stderr, "av_buffersink_get_frame_flags()\n");
+                    LOG(ERROR) <<"av_buffersink_get_frame_flags()";
                     return ret;
-                }
-
-                if (!initialized) {
-                    encoder_ctx->hw_frames_ctx = av_buffersink_get_hw_frames_ctx(sink_filter_ctx);
-                    CHECK(encoder_ctx->hw_frames_ctx);
-
-                    encoder_ctx->hw_device_ctx = av_buffer_ref(device_ref);
-                    CHECK(encoder_ctx->hw_device_ctx);
-
-                    // encoder codec params
-                    encoder_ctx->height = decoder_ctx->height;
-                    encoder_ctx->width = decoder_ctx->width;
-                    encoder_ctx->pix_fmt = AV_PIX_FMT_CUDA;
-                    encoder_ctx->sample_aspect_ratio = decoder_ctx->sample_aspect_ratio;
-                    // time base
-                    encoder_ctx->time_base = av_inv_q(av_buffersink_get_frame_rate(sink_filter_ctx));
-                    encoder_ctx->framerate = av_buffersink_get_frame_rate(sink_filter_ctx);
-
-                    CHECK(avcodec_open2(encoder_ctx, encoder, nullptr) >= 0);
-                    CHECK(avformat_new_stream(encoder_fmt_ctx, encoder));
-                    CHECK(avcodec_parameters_from_context(encoder_fmt_ctx->streams[0]->codecpar, encoder_ctx) >= 0);
-                    encoder_fmt_ctx->streams[0]->time_base = av_inv_q(av_buffersink_get_frame_rate(sink_filter_ctx));
-                    encoder_fmt_ctx->streams[0]->avg_frame_rate = av_buffersink_get_frame_rate(sink_filter_ctx);
-
-                    CHECK(avformat_write_header(encoder_fmt_ctx, nullptr) >= 0);
-
-                    av_dump_format(encoder_fmt_ctx, 0, out_filename.c_str(), 1);
-                    LOG(INFO) << fmt::format(
-                            "[OUTPUT] {}x{}, encoder: {}, format: {}, framerate: {}/{}, tbc: {}/{}, tbn: {}/{}",
-                            encoder_ctx->width, encoder_ctx->height, encoder->name,
-                            av_get_pix_fmt_name(encoder_ctx->pix_fmt),
-                            encoder_ctx->framerate.num, encoder_ctx->framerate.den,
-                            encoder_ctx->time_base.num, encoder_ctx->time_base.den,
-                            encoder_fmt_ctx->streams[0]->time_base.num, encoder_fmt_ctx->streams[0]->time_base.den);
-
-                    initialized = true;
                 }
 
                 // clear
@@ -214,6 +209,7 @@ int main(int argc, char* argv[])
                                                 //   decoder_fmt_ctx->streams[video_stream_idx]->time_base,
                                                 //   encoder_ctx->time_base);
 
+                // encoding
                 ret = avcodec_send_frame(encoder_ctx, filtered_frame);
                 while (ret >= 0) {
                     av_packet_unref(out_packet);

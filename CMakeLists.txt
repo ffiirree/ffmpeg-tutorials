@@ -13,7 +13,7 @@ endif()
 if(MSVC)
     message(STATUS "Windows SDK version is ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 
-    add_compile_options(/W4 /utf-8 /DUNICODE /D_UNICODE /DNOMINMAX /Zc:preprocessor  /Zc:__cplusplus)
+    add_compile_options(/W3 /utf-8 /DUNICODE /D_UNICODE /DNOMINMAX /Zc:preprocessor  /Zc:__cplusplus)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
