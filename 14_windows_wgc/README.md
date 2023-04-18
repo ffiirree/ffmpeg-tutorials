@@ -1,8 +1,24 @@
-# Windows 多媒体
+# Windows Graphics
+
+## Windows 屏幕采集方法
+
+Windows 上的屏幕采集技术是伴随着其图形图像技术的演进而进行迭代的，不同的采集方法使用了不同的技术，由于Windows优秀的兼容性，
+老的采集技术依旧可以使用，只是相对于最新的技术占用更多的资源，目前至少有以下几种采集方法：
+
+- `GDI`: 兼容各版本的Windows，占用大量CPU资源，性能差，鼠标需要单采，无法实现过滤制定窗口，`FFmpeg`的实现为`gdigrab`;
+- `DXGI`: 即`Desktop Duplication API`, Windows 8 及后续版本，性能好,`FFmpeg 6.0`的实现为`ddagrab`;
+- `Magnification`: 能实现放大缩小颜色转换等操作，能过滤窗口;
+- `Window Graphics Capture`: Windows 10 1803 及后续版本；`D3D11`和`DXGI`使用GPU加速，占用资源更少。
+
+> 像 obs-studio 则实现了`GDI + DDA + WGC`，运行时根据不同的系统版本和硬件条件进行采集技术的选择
+
+其中，`GDI`和`DDA`的实现均需要**自绘鼠标**，而且`FFmpeg`中的`gdigrab`录屏时会有明显的鼠标闪烁问题，这个问题至今无法解决。
+
+## 技术演化
 
 关于Windows上**录屏**/**录音**的实现有很多方法，这些方法主要分为两大类: `Audio and Video`和`Graphics and gaming`。两类方法在Windows的发展过程中都经过了多次的迭代，因此具体的实现方法有很多种，这些方法有适用于不同的Windows版本和应用场景。
 
-![Multimedia](/14_windows_mm/win_mm_dep.png)
+![Multimedia](/images/win_mm_dep.png)
 
 ## Audio and Video
 
@@ -28,7 +44,7 @@ DirectShow is designed for C++. Microsoft does not provide a managed API for Dir
 
 DirectShow simplifies media playback, format conversion, and capture tasks. At the same time, it provides access to the underlying stream control architecture for applications that require custom solutions. You can also create your own DirectShow components to support new formats or custom effects.
 
-![DirectShow](/14_windows_mm/directshow_arch.png)
+![DirectShow](/images/directshow_arch.png)
 
 ### Microsoft Media Foundation
 
@@ -40,7 +56,7 @@ Media Foundation is the next generation multimedia platform for Windows that ena
 
 Windows provides several C++/COM APIs for graphics. These APIs are shown in the following diagram.
 
-![Windows Graphics Architecture](/14_windows_mm/win_graphics_arch.png)
+![Windows Graphics Architecture](/images/win_graphics_arch.png)
 
 - `Graphics Device Interface (GDI)` is the original graphics interface for Windows. GDI was first written for 16-bit Windows and then updated for 32-bit and 64-bit Windows.
 - `GDI+` was introduced in Windows XP as a successor to GDI. The GDI+ library is accessed through a set of C++ classes that wrap flat C functions. The .NET Framework also provides a managed version of GDI+ in the System.Drawing namespace.
@@ -63,14 +79,14 @@ Hardware-accelerated alpha-blending also enables anti-aliasing. GDI does not sup
 
 Before Windows Vista, a Windows program would draw **directly** to the screen. In other words, the program would write directly to the memory buffer shown by the video card. This approach can cause visual artifacts if a window does not repaint itself correctly. Windows Vista fundamentally changed how windows are drawn, by introducing the `Desktop Window Manager (DWM)`. When the DWM is enabled, a window no longer draws directly to the display buffer. Instead, each window draws to an offscreen memory buffer, also called an offscreen surface. The DWM then composites these surfaces to the screen.
 
-![W/O DWM](/14_windows_mm/dwm_w_o.png)
+![W/O DWM](/images/dwm_w_o.png)
 
 
 #### The Windows Display Driver Model  (WDDM)
 
 `The Windows Display Driver Model (WDDM)` is the graphics display driver architecture introduced in Windows Vista (WDDM v1.0). WDDM is required starting with Windows 8 (WDDM v1.2). The WDDM design guide discusses WDDM requirements, specifications, and behavior for WDDM drivers.
 
-![DX10](/14_windows_mm/dx10arch.png)
+![DX10](/images/dx10arch.png)
 
 A graphics hardware vendor must supply the user-mode display driver and the display miniport driver. The user-mode display driver is a dynamic-link library (DLL) that is loaded by the Microsoft Direct3D runtime. **The display miniport driver communicates with the Microsoft DirectX graphics kernel subsystem.**
 
@@ -82,7 +98,7 @@ In previous versions of Direct3D, low-level tasks like enumeration of hardware d
 
 DXGI's purpose is to communicate with the kernel mode driver and the system hardware, as shown in the following diagram.
 
-![DXGI](/14_windows_mm/dxgi-dll.png)
+![DXGI](/images/dxgi-dll.png)
 
 An application can access DXGI directly, or call the Direct3D APIs in D3D11_1.h, D3D11.h, D3D10_1.h, or D3D10.h, which handles the communications with DXGI for you. You may want to work with DXGI directly if your application needs to enumerate devices or control how data is presented to an output.
 
@@ -90,15 +106,6 @@ An application can access DXGI directly, or call the Direct3D APIs in D3D11_1.h,
 #### Desktop Duplication API
 
 Windows 8 disables standard Windows 2000 Display Driver Model (XDDM) mirror drivers and offers the `desktop duplication API` instead. The desktop duplication API provides remote access to a desktop image for collaboration scenarios. **Apps can use the desktop duplication API to access frame-by-frame updates to the desktop**. Because apps receive updates to the desktop image in a DXGI surface, the apps can use the full power of the GPU to process the image updates.
-
-## Windows 屏幕采集方法
-
-- `GDI`: 兼容各版本的Windows，占用大量CPU资源，性能差，鼠标需要单采，无法实现过滤制定窗口
-- `DXGI`: Windows 8 及后续版本，性能好
-- `Magnification`: 能实现放大缩小颜色转换等操作，能过滤窗口
-- `Window Graphics Capture`: Windows 10 1803 及后续版本；效率高，拓展屏采集支持高，1080p采集消耗GPU达到个位数
-
-> 目前看来 `GDI + WGC` 的组合是最好的，在支持WGC的高版本系统上使用WGC，否则使用GDI，这样就可以覆盖所有版本的系统
 
 ### OBS Studio 画面捕获实现
 
