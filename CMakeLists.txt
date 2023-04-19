@@ -23,7 +23,7 @@ option(DISABLE_WGC "Disable the Windows Graphics Capture Example" OFF)
 # #######################################################################################################################
 # dependencies
 # #######################################################################################################################
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # 3rdparty: glog fmt
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "build static libraries.")
@@ -37,7 +37,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 COMPONENTS Widgets Gui Multimedia REQUIRED)
-find_package(FFmpeg COMPONENTS avutil avcodec avformat avdevice avfilter swscale swresample REQUIRED)
+find_package(FFmpeg 6.0 REQUIRED)
 
 if(WIN32)
     # GUI/console
@@ -56,7 +56,7 @@ list(
         LIBS
         Qt5::Widgets Qt5::Gui Qt5::Multimedia
         glog::glog fmt::fmt
-        FFmpeg::avutil FFmpeg::avcodec FFmpeg::avformat FFmpeg::avdevice FFmpeg::avfilter FFmpeg::swscale FFmpeg::swresample
+        ffmpeg::ffmpeg
         $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
         $<$<PLATFORM_ID:Windows>:strmiids>
 )

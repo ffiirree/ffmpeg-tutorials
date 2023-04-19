@@ -6,6 +6,8 @@
 # FFMPEG_LIBRARIES      - Combined list of all components libraries
 # FFMPEG_VERSION        - Version defined in libavutil/ffversion.h
 #
+# ffmpeg::ffmpeg
+#
 # For each requested component the following variables are defined:
 #
 # FFMPEG_<component>_FOUND          - The component was found
@@ -16,13 +18,15 @@
 # FFMPEG_<component>_VERSION_MINOR  - The components minor version
 # FFMPEG_<component>_VERSION_MICRO  - The components micro version
 #
+# ffmpeg::<component>
+#
 # <component> is the uppercase name of the component
 
 find_package(PkgConfig QUIET)
 
 # find the root dir for specified version
 function(find_ffmpeg_root_by_version version)
-    set(FFMPEG_FIND_PATHS $ENV{PATH} $ENV{FFMPEG_PATH} $ENV{FFMPEG_ROOT} /opt /user /sw)
+    set(FFMPEG_FIND_PATHS $ENV{PATH} $ENV{FFMPEG_PATH} $ENV{FFMPEG_ROOT} /opt /usr /sw)
 
     set(_found_version)
     set(_found_root_dir)
@@ -30,29 +34,34 @@ function(find_ffmpeg_root_by_version version)
     set(INDEX 1)
 
     foreach(path ${FFMPEG_FIND_PATHS})
+        unset(FFMPEG_${INDEX}_HEADER_DIR CACHE)
         find_path(
             FFMPEG_${INDEX}_HEADER_DIR
-            NAMES "include/libavutil/ffversion.h"
-            PATHS ${path}
-            PATH_SUFFIXES ffmpeg
-
+            NAMES "libavutil/ffversion.h"
+            PATHS ${path} ${path}/include/${CMAKE_LIBRARY_ARCHITECTURE}
+            PATH_SUFFIXES ffmpeg include
             NO_DEFAULT_PATH
         )
         mark_as_advanced(FFMPEG_${INDEX}_HEADER_DIR)
 
         if(NOT "${FFMPEG_${INDEX}_HEADER_DIR}" STREQUAL "FFMPEG_${INDEX}_HEADER_DIR-NOTFOUND")
             # parse ffmpeg version
-            set(_ffmpeg_version_header "${FFMPEG_${INDEX}_HEADER_DIR}/include/libavutil/ffversion.h")
+            set(_ffmpeg_version_header "${FFMPEG_${INDEX}_HEADER_DIR}/libavutil/ffversion.h")
 
             if(EXISTS "${_ffmpeg_version_header}")
                 file(STRINGS "${_ffmpeg_version_header}" __ffmpeg_version_line REGEX "FFMPEG_VERSION")
 
                 string(REGEX REPLACE ".*FFMPEG_VERSION[ \t]+\"([0-9\\.]*).*\"" "\\1" _ffmpeg_version "${__ffmpeg_version_line}")
 
-                if(${_ffmpeg_version} VERSION_GREATER_EQUAL ${version})
+                # if do not specified, return the fist one
+                if("${version}" STREQUAL "")
+                    set(_found_version ${_ffmpeg_version})
+                    set(_found_root_dir ${path})
+                    break()
+                elseif(${_ffmpeg_version} VERSION_GREATER_EQUAL "${version}") # otherwise, the minimum one of suitable versions
                     if((NOT _found_version) OR(${_ffmpeg_version} VERSION_LESS "${_found_version}"))
                         set(_found_version ${_ffmpeg_version})
-                        set(_found_root_dir ${FFMPEG_${INDEX}_HEADER_DIR})
+                        set(_found_root_dir ${path})
                     endif()
                 endif()
 
@@ -64,8 +73,6 @@ function(find_ffmpeg_root_by_version version)
 
             math(EXPR INDEX ${INDEX}+1)
         endif()
-
-        unset(FFMPEG_${INDEX}_HEADER_DIR CACHE)
     endforeach()
 
     set(FFMPEG_VERSION ${_found_version} PARENT_SCOPE)
@@ -79,10 +86,13 @@ function(find_ffmpeg_library root_dir component header)
     set(FFMPEG_${component_u}_FOUND FALSE PARENT_SCOPE)
     set(FFmpeg_${component}_FOUND FALSE PARENT_SCOPE)
 
+    unset(FFMPEG_${component}_INCLUDE_DIR CACHE)
+    unset(FFMPEG_${component}_LIBRARY CACHE)
+
     find_path(
         FFMPEG_${component}_INCLUDE_DIR
         NAMES "lib${component}/${header}" "lib${component}/version.h"
-        PATHS ${root_dir}
+        PATHS ${root_dir} ${root_dir}/include/${CMAKE_LIBRARY_ARCHITECTURE}
         PATH_SUFFIXES ffmpeg libav include
         NO_DEFAULT_PATH
     )
@@ -90,7 +100,7 @@ function(find_ffmpeg_library root_dir component header)
     find_library(
         FFMPEG_${component}_LIBRARY
         NAMES "${component}" "lib${component}"
-        PATHS ${root_dir}
+        PATHS ${root_dir} ${root_dir}/lib/${CMAKE_LIBRARY_ARCHITECTURE}
         PATH_SUFFIXES lib lib64 bin bin64
         NO_DEFAULT_PATH
     )
@@ -148,11 +158,11 @@ endfunction()
 
 # start finding
 if(NOT FFmpeg_FIND_COMPONENTS)
-    message(FATAL_ERROR "No FFmpeg components requested")
+    list(APPEND FFmpeg_FIND_COMPONENTS avutil avcodec avdevice avfilter avformat swresample swscale postproc)
 endif()
 
 set(FFMPEG_VERSION)
-find_ffmpeg_root_by_version(${FFmpeg_FIND_VERSION})
+find_ffmpeg_root_by_version("${FFmpeg_FIND_VERSION}")
 
 if((NOT FFMPEG_VERSION) OR(NOT FFMPEG_ROOT_DIR))
     message(FATAL_ERROR "Can not find the suitable version.")
@@ -199,20 +209,29 @@ find_package_handle_standard_args(
 
 if(FFMPEG_FOUND)
     foreach(component ${FFmpeg_FIND_COMPONENTS})
-        if(NOT TARGET FFmpeg::${component})
+        if(NOT TARGET ffmpeg::${component})
             string(TOUPPER ${component} component_u)
 
             if(FFMPEG_${component_u}_FOUND)
                 if(IS_ABSOLUTE "${FFMPEG_${component_u}_LIBRARIES}")
-                    add_library(FFmpeg::${component} UNKNOWN IMPORTED)
-                    set_target_properties(FFmpeg::${component} PROPERTIES IMPORTED_LOCATION "${FFMPEG_${component_u}_LIBRARIES}")
+                    add_library(ffmpeg::${component} UNKNOWN IMPORTED)
+                    set_target_properties(ffmpeg::${component} PROPERTIES IMPORTED_LOCATION "${FFMPEG_${component_u}_LIBRARIES}")
                 else()
-                    add_library(FFmpeg::${component} INTERFACE IMPORTED)
-                    set_target_properties(FFmpeg::${component} PROPERTIES IMPORTED_LIBNAME "${FFMPEG_${component_u}_LIBRARIES}")
+                    add_library(ffmpeg::${component} INTERFACE IMPORTED)
+                    set_target_properties(ffmpeg::${component} PROPERTIES IMPORTED_LIBNAME "${FFMPEG_${component_u}_LIBRARIES}")
                 endif()
 
-                set_target_properties(FFmpeg::${component} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_${component_u}_INCLUDE_DIRS}")
+                set_target_properties(ffmpeg::${component} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_${component_u}_INCLUDE_DIRS}")
             endif()
         endif()
     endforeach()
+
+    if(NOT TARGET ffmpeg::ffmpeg)
+        if(FFMPEG_FOUND)
+            add_library(ffmpeg::ffmpeg INTERFACE IMPORTED)
+            set_property(TARGET ffmpeg::ffmpeg PROPERTY INTERFACE_LINK_LIBRARIES ${FFMPEG_LIBRARIES})
+            set_property(TARGET ffmpeg::ffmpeg PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${FFMPEG_INCLUDE_DIRS})
+        endif()
+
+    endif()
 endif()
