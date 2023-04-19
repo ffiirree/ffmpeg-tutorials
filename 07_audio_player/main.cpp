@@ -8,7 +8,7 @@ extern "C" {
 
 int main(int argc, char *argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
     CHECK(argc >= 2) << "player <input>";
 
     AudioDecoder decoder;

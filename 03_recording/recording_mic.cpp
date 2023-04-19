@@ -14,7 +14,7 @@ extern "C" {
 
 int main(int argc, char* argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     if (argc < 4) {
         LOG(ERROR) << "recording_mic <format(dshow/alsa/pulse)> <input(audio=MICROPHONE/default)> <output>";

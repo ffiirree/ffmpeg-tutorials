@@ -37,7 +37,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 COMPONENTS Widgets Gui Multimedia REQUIRED)
-find_package(FFmpeg 6.0 REQUIRED)
+find_package(FFmpeg 6 REQUIRED)
 
 if(WIN32)
     # GUI/console
@@ -58,7 +58,12 @@ list(
         glog::glog fmt::fmt
         ffmpeg::ffmpeg
         $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
+        $<$<PLATFORM_ID:Windows>:dwmapi>
         $<$<PLATFORM_ID:Windows>:strmiids>
+        $<$<PLATFORM_ID:Windows>:ntdll>
+        $<$<PLATFORM_ID:Windows>:Shcore>
+        $<$<PLATFORM_ID:Windows>:DXGI>
+        $<$<PLATFORM_ID:Windows>:D3D11>
 )
 
 function(create_exe name source_file)

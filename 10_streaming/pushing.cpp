@@ -11,7 +11,7 @@ extern "C" {
 
 int main(int argc, char* argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     if (argc < 3) {
         LOG(ERROR) << "pushing <input_video> <rtmp_name>";

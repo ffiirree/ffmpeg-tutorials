@@ -77,7 +77,7 @@ HRESULT EnumerateDevices(REFGUID category, IEnumMoniker **ppEnum)
 
 int main(int argc, char *argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if (SUCCEEDED(hr))

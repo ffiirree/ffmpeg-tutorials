@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     if (argc < 2) {
         LOG(ERROR) << "player <input>";

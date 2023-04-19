@@ -16,7 +16,7 @@ extern "C" {
 
 int main(int argc, char* argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     args::parser parser;
     parser.add("-i", "../../hevc.mkv", "input file");

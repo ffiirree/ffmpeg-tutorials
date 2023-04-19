@@ -25,7 +25,7 @@ enum AVPixelFormat get_hw_format(AVCodecContext *, const enum AVPixelFormat *pix
 
 int main(int argc, char* argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     enum AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
     while((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE) {

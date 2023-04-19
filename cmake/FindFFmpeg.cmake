@@ -232,6 +232,5 @@ if(FFMPEG_FOUND)
             set_property(TARGET ffmpeg::ffmpeg PROPERTY INTERFACE_LINK_LIBRARIES ${FFMPEG_LIBRARIES})
             set_property(TARGET ffmpeg::ffmpeg PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${FFMPEG_INCLUDE_DIRS})
         endif()
-
     endif()
 endif()

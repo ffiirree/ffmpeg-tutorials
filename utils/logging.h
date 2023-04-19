@@ -8,8 +8,8 @@ public:
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
-    static Logger& init(char** argv) {
-        static Logger logger(argv);
+    static Logger& init(char* argv0) {
+        static Logger logger(argv0);
         return logger;
     }
 
@@ -18,8 +18,8 @@ public:
     }
 
 private:
-    explicit Logger(char** argv) {
-        google::InitGoogleLogging(argv[0]);
+    explicit Logger(char* argv0) {
+        google::InitGoogleLogging(argv0);
         FLAGS_logbufsecs = 0;
         FLAGS_stderrthreshold = google::GLOG_INFO;
         FLAGS_colorlogtostderr = true;

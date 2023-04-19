@@ -44,7 +44,7 @@ enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *
 
 int main(int argc, char* argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     args::parser parser("hw_transcoding -i <input> -hwaccel <hardware> -o <output>", false);
     parser.add("-i", "../h264.mkv", "the input file");

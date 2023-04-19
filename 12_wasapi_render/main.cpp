@@ -9,7 +9,7 @@ extern "C"{
 
 int main(int argc, char* argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
     CHECK(argc >= 2);
 
     const char * in_filename = argv[1];

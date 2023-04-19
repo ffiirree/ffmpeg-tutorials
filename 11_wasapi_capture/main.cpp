@@ -9,7 +9,7 @@ extern "C"{
 
 int main(int argc, char* argv[])
 {
-    Logger::init(argv);
+    Logger::init(argv[0]);
 
     const char * out_filename = argc >= 2 ? argv[1] : "out.mp4";
 
