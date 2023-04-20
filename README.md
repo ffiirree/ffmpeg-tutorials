@@ -35,15 +35,16 @@ Examples and tutorials for `decoding / encoding`, `(complex) filtering`, `screen
 
 - `Windows Version >= 10.0.17134.48` (aka `Windows 10 Version 1803`)
 - `Windows SDK Version >= 10.0.20348.0`
+- `FFmpeg >= 6.0`
 
 如果你的Windows或SDK不能满足要求，你可以选择:
 
-- 通过`-DDISABLE_WGC=ON`来禁用 `Windows Graphics Capture` 示例
+- 通过 `-DDISABLE_WGC=ON` 来禁用 `Windows Graphics Capture` 示例
 - 通过 `Visual Studio Installer` 安装最新的 `Windows SDK`
 
 #### FFmpeg
 
-> Version : 4.4.x or 5.1.x
+> Version : > 4.3 (-DDISABLE_WGC=OFF : >= 6.0)
 
 - [Windows builds](https://www.ffmpeg.org/download.html#build-windows): 注意下载`shared`版本，添加到**环境变量**中
 - [Build from source](/compile_on_windows.md)

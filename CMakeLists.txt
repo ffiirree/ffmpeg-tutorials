@@ -37,7 +37,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 COMPONENTS Widgets Gui Multimedia REQUIRED)
-find_package(FFmpeg 6 REQUIRED)
+
+if (DISABLE_WGC)
+    find_package(FFmpeg 4.3 REQUIRED)
+else()
+    find_package(FFmpeg 6 REQUIRED)
+endif()
 
 if(WIN32)
     # GUI/console
