@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 {
     Logger::init(argv[0]);
 
-    args::parser parser("hw_transcoding -i <input> -hwaccel <hardware> -o <output>", false);
+    args::parser parser("hw_transcode -i <input> --hwaccel <hardware> --decoder <decoder> --encoder <encoder> -o <output>", false);
     parser.add("-i", "../h264.mkv", "the input file");
     parser.add("-o", "../hw.mkv", "the output file");
     parser.add("--hwaccel", "cuda", "the hwaccel type");

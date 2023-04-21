@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
 {
     Logger::init(argv[0]);
 
+    // enunm supported hwaccel types
     enum AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
     while((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE) {
         LOG(INFO) << "support hwdevice: " << av_hwdevice_get_type_name(type);
@@ -34,7 +35,7 @@ int main(int argc, char* argv[])
 
     CHECK(av_hwdevice_find_type_by_name("cuda") != AV_HWDEVICE_TYPE_NONE);
 
-    CHECK(argc >= 3) << "Usage: cuda_decode <input> <output>";
+    CHECK(argc >= 3) << "Usage: hw_decode <input> <output>";
 
     const char * in_filename = argv[1];
     const char * out_filename = argv[2];

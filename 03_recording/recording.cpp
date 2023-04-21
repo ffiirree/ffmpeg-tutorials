@@ -17,9 +17,9 @@ int main(int argc, char* argv[])
     Logger::init(argv[0]);
 
     if (argc < 4) {
-        LOG(ERROR) << "recording <format(dshow/gdigrab)> <input(video=CAMERA/desktop)> <output>";
-        LOG(ERROR) << "\trecording dshow video=\"HD WebCam\" camera.mp4";
-        LOG(ERROR) << "\trecording gdigrab desktop desktop.mp4";
+        LOG(ERROR) << "record <format(dshow/gdigrab)> <input(video=CAMERA/desktop)> <output>";
+        LOG(ERROR) << "\trecord dshow video=\"HD WebCam\" camera.mp4";
+        LOG(ERROR) << "\trecord gdigrab desktop desktop.mp4";
         return -1;
     }
 

@@ -28,12 +28,12 @@ int main(int argc, char* argv[])
 
      auto default_out_device = default_audio_endpoint(false);
      if (default_out_device.has_value()) {
-         LOG(INFO) << "[OUTPUT] name = '" << default_out_device->first << "', id = '" << default_out_device->second << "' (default)";
+         LOG(INFO) << "[O/DEFAULT] name = '" << default_out_device->first << "', id = '" << default_out_device->second << "' (default)";
      }
 
      auto default_in_device = default_audio_endpoint(true);
      if (default_out_device.has_value()) {
-         LOG(INFO) << "[ INPUT] name = '" << default_in_device->first << "', id = '" << default_in_device->second << "' (default)";
+         LOG(INFO) << "[I/DEFAULT] name = '" << default_in_device->first << "', id = '" << default_in_device->second << "' (default)";
      }
      // @}
 
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
                      return ret;
                  }
 
-                 LOG(INFO) << "[ARRIVED] samples = " << decoded_frame->nb_samples << ",  pts = " << decoded_frame->pts;
+                 LOG(INFO) << fmt::format("[ ARRIVED] samples = {:>5d}, pts = {:>13d}", decoded_frame->nb_samples, decoded_frame->pts);
 
                  CHECK(av_audio_fifo_realloc(audio_buffer, av_audio_fifo_size(audio_buffer) + decoded_frame->nb_samples) >= 0);
 
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
                      return ret;
                  }
 
-                 LOG(INFO) << fmt::format("[ENCODING] packet = {:>5d}, pts = {:>8d}, size = {:>6d}",
+                 LOG(INFO) << fmt::format("[ENCODING]  packet = {:>5d}, pts = {:>13d}, size = {:>6d}",
                                           encoder_ctx->frame_number, out_packet->pts,  out_packet->size);
 
                  out_packet->stream_index = 0;

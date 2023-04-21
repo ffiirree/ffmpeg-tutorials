@@ -9,7 +9,7 @@ extern "C" {
 int main(int argc, char* argv[])
 {
     if (argc < 3) {
-        printf("transcoding <input> <output>");
+        printf("transcode <input> <output>");
         return -1;
     }
 

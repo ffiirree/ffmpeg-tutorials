@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 {
     Logger::init(argv[0]);
 
-    args::parser parser;
+    args::parser parser("hw_encode -i <input> --hwaccel <hardware> --encoder <encoder> -o <output>");
     parser.add("-i", "../../hevc.mkv", "input file");
     parser.add("--hwaacel", "cuda", "hardware device type");
     parser.add("--encoder", "h264_nvenc", "hardware encoder");
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
                                          encoder_ctx->time_base,
                                          encoder_fmt_ctx->streams[0]->time_base);
 
-                    LOG(INFO) << fmt::format(" -- [ENCODING] frame = {}, pts = {}, dts = {}",
+                    LOG(INFO) << fmt::format("[ENCODING] frame = {:>5d}, pts = {:>13d}, dts = {:>13d}",
                                              encoder_ctx->frame_number, out_packet->pts, out_packet->dts);
 
                     if (av_interleaved_write_frame(encoder_fmt_ctx, out_packet) != 0) {

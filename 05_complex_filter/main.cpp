@@ -31,6 +31,7 @@ int main(int argc, char* argv[])
         }
     }
 
+    // open input files
     for(auto& input: input_files) {
         auto decoder = std::make_shared<Decoder>();
         CHECK(decoder->open(input) >= 0);
@@ -39,10 +40,12 @@ int main(int argc, char* argv[])
         filter.create_buffersrc(decoder->filter_args());
     }
 
-    const std::string filter_complex = "[0:v] scale=64:-1:flags=lanczos [s];[1:v][s]overlay=10:10";
+    // create filter graph
+    const std::string filter_complex = "[0:v] scale=128:-1:flags=lanczos [s];[1:v][s]overlay=10:10";
     filter.create(filter_complex);
     LOG(INFO) << fmt::format(R"( -- same as : ffmpeg -i {} -i {} -filter_complex "{}" {})", input_files[0], input_files[1], filter_complex, output_file);
 
+    // open output file
     encoder.open(output_file, filter.width(), filter.height(), filter.format(), filter.sample_aspect_ratio(), filter.framerate(), filter.time_base());
 
     for (auto & decoder : decoders) {

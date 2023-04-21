@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ffmpeg_examples VERSION 0.0.2 DESCRIPTION "ffmpeg tutorial & examples" LANGUAGES C CXX)
+project(ffmpeg_examples VERSION 0.0.3 DESCRIPTION "ffmpeg tutorial & examples" LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -74,16 +74,21 @@ function(create_exe name source_file)
     target_include_directories(${name} PRIVATE utils)
 endfunction(create_exe)
 
-create_exe(remuxing 01_remuxing/remuxing.cpp)
-create_exe(transcoding 02_transcoding/transcoding.cpp)
-create_exe(recording 03_recording/recording.cpp)
-create_exe(recording_mic 03_recording/recording_mic.cpp)
-create_exe(filter 04_simple_filter/filter.cpp)
-create_exe(cuda_decode 13_hwaccel/cuda_decode.cpp)
-create_exe(hw_transcoding 13_hwaccel/hw_transcoding.cpp)
-create_exe(hw_encoding 13_hwaccel/hw_encoding.cpp)
+# build/*.exe
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR})
+
+create_exe(remux        01_remuxing/remuxing.cpp)
+create_exe(transcode    02_transcoding/transcoding.cpp)
+create_exe(record       03_recording/recording.cpp)
+create_exe(record_mic   03_recording/recording_mic.cpp)
+create_exe(filter       04_simple_filter/filter.cpp)
+create_exe(hw_decode    13_hwaccel/hw_decoding.cpp)
+create_exe(hw_encode    13_hwaccel/hw_encoding.cpp)
+create_exe(hw_transcode 13_hwaccel/hw_transcoding.cpp)
 if(WIN32)
-    create_exe(dshow 17_win_dshow/main.cpp)
+    create_exe(dshow    17_win_dshow/main.cpp)
 endif()
 
 add_subdirectory(05_complex_filter)

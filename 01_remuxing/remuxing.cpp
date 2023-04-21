@@ -7,7 +7,7 @@ extern "C" {
 int main(int argc, char* argv[])
 {
     if (argc < 3) {
-        printf("remuxing <input> <output>\n");
+        printf("remux <input> <output>\n");
         return -1;
     }
 

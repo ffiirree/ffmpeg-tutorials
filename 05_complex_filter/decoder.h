@@ -43,6 +43,7 @@ public:
 
     int open(const std::string& filename)
     {
+        LOG(INFO) << filename;
         CHECK(avformat_open_input(&fmt_ctx_, filename.c_str(), nullptr, nullptr) >= 0);
         CHECK(avformat_find_stream_info(fmt_ctx_, nullptr) >= 0);
 
@@ -51,18 +52,19 @@ public:
         CHECK(video_stream_idx_ >= 0 || audio_stream_idx_ >= 0);
 
         // decoder
+        LOG(INFO) << fmt_ctx_->streams[video_stream_idx_]->codecpar->codec_id;
         auto video_decoder = avcodec_find_decoder(fmt_ctx_->streams[video_stream_idx_]->codecpar->codec_id);
-        CHECK_NOTNULL(video_decoder_);
+        CHECK_NOTNULL(video_decoder);
 
         // decoder context
-        video_decode_ctx_ = avcodec_alloc_context3(video_decoder_);
+        video_decode_ctx_ = avcodec_alloc_context3(video_decoder);
         CHECK_NOTNULL(video_decode_ctx_);
 
         CHECK(avcodec_parameters_to_context(video_decode_ctx_, fmt_ctx_->streams[video_stream_idx_]->codecpar) >= 0);
 
         AVDictionary * decoder_options = nullptr;
         av_dict_set(&decoder_options, "threads", "auto", AV_DICT_DONT_OVERWRITE);
-        CHECK(avcodec_open2(video_decode_ctx_, video_decoder_, &decoder_options) >= 0);
+        CHECK(avcodec_open2(video_decode_ctx_, video_decoder, &decoder_options) >= 0);
 
         av_dump_format(fmt_ctx_, 0, filename.c_str(), 0);
         LOG(INFO) << fmt::format("[ INPUT] {}: {}x{}, fps = {}/{}, tbr = {}/{}, tbc = {}/{}, tbn = {}/{}\n",
@@ -173,9 +175,6 @@ public:
 
     AVCodecContext * video_decode_ctx_{nullptr};
     AVCodecContext * audio_decode_ctx_{nullptr};
-
-    AVCodec * video_decoder_{nullptr};
-    AVCodec * audio_decoder_{nullptr};
 
     AVPacket *packet_{nullptr};
     AVFrame * video_frame_{nullptr};
