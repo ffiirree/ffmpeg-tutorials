@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Default build type: Release." FORCE)
 endif()
 
 if(MSVC)
@@ -44,10 +44,7 @@ else()
     find_package(FFmpeg 6 REQUIRED)
 endif()
 
-if(WIN32)
-    # GUI/console
-    set(CMAKE_WIN32_EXECUTABLE ON)
-elseif(UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE)
     find_package(Qt5 COMPONENTS X11Extras REQUIRED)
 endif()
 

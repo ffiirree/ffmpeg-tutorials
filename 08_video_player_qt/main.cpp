@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     Logger::init(argv[0]);
 
     if (argc < 2) {
-        LOG(ERROR) << "player <input>";
+        LOG(ERROR) << "video_player <input>";
         return -1;
     }
 

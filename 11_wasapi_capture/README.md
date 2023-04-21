@@ -24,7 +24,7 @@ The Core Audio APIs are:
 - `DeviceTopology API`. Clients use this API to directly access the topological features (for example, volume controls and multiplexers) that lie along the data paths inside hardware devices in audio adapters.
 - `EndpointVolume API`. Clients use this API to directly access the volume controls on audio endpoint devices. This API is primarily used by applications that manage exclusive-mode audio streams.
 
-![Core Audio APIs](/11_wasapi_capture/core_audio.jpg)
+![Core Audio APIs](/images/core_audio.jpg)
 
 **A client of WASAPI passes data to an endpoint device through an `endpoint buffer`**. System software and hardware components manage the movement of data from the endpoint buffer to the endpoint device in a manner that is largely transparent to the client. Furthermore, for an endpoint device that plugs into an audio adapter with jack-presence detection, the client can create an endpoint buffer only for an endpoint device that is physically present. For more information about jack-presence detection, see Audio Endpoint Devices.
 

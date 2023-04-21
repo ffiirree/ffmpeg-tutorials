@@ -9,7 +9,7 @@ extern "C" {
 int main(int argc, char *argv[])
 {
     Logger::init(argv[0]);
-    CHECK(argc >= 2) << "player <input>";
+    CHECK(argc >= 2) << "audio_player <input>";
 
     AudioDecoder decoder;
     CHECK(decoder.open(argv[1]) >= 0);

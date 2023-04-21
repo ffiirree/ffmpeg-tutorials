@@ -101,9 +101,9 @@ int main(int argc, char* argv[])
                              decoder_fmt_ctx->streams[packet->stream_index]->time_base, 
                              encoder_fmt_ctx->streams[stream_mapping[packet->stream_index]]->time_base);
 
-        printf(" -- %s] pts: %6ld, dts: %6ld, duration: %5ld, frame = %6ld\n",
+        printf(" -- %s] packet = %6ld, pts: %6ld, dts: %6ld, duration: %5ld\n",
                av_get_media_type_string(encoder_fmt_ctx->streams[packet->stream_index]->codecpar->codec_type),
-               packet->pts, packet->dts, packet->duration, frame_number++);
+               frame_number++, packet->pts, packet->dts, packet->duration);
 
         packet->stream_index = stream_mapping[packet->stream_index];
         // write the packet to the output file
