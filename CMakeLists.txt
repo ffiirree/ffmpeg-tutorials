@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 project(ffmpeg_examples VERSION 0.0.3 DESCRIPTION "ffmpeg tutorial & examples" LANGUAGES C CXX)
 
+# #######################################################################################################################
+# compiler config
+# #######################################################################################################################
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -18,6 +21,13 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<0:>)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<0:>)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<0:>)
+
+# #######################################################################################################################
+# options
+# #######################################################################################################################
 option(DISABLE_WGC "Disable the Windows Graphics Capture Example" OFF)
 
 # #######################################################################################################################
@@ -73,11 +83,6 @@ function(create_exe name source_file)
     target_link_libraries(${name} PRIVATE ${LIBS})
     target_include_directories(${name} PRIVATE utils)
 endfunction(create_exe)
-
-# build/*.exe
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR})
 
 create_exe(remux        01_remuxing/remuxing.cpp)
 create_exe(transcode    02_transcoding/transcoding.cpp)
