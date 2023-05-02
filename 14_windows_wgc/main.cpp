@@ -90,7 +90,7 @@ static int init_hwframes_ctx(int w, int h)
     frames_ctx->height = w;
     frames_ctx->width = h;
     frames_ctx->sw_format = AV_PIX_FMT_BGRA;
-
+    
     if (av_hwframe_ctx_init(frames_ref) < 0) {
         LOG(ERROR) << "[      WGC] av_hwframe_ctx_init";
         return -1;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     auto capturer = std::make_unique<WgcCapturer>();
 
     for (const auto& window : windows) {
-        if (window.title.find(L"Google Chrome") != std::wstring::npos) {
+        if (window.title.find(L"Visual Studio Code") != std::wstring::npos) {
             capturer->open(window.id);
             break;
         }
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 
     auto last_pts = AV_NOPTS_VALUE;
     uint32_t counter = 0;
-    for (size_t i = 360; i;) {
+    for (size_t i = 180; i;) {
         if (capturer->next(frame) == AVERROR(EAGAIN)) {
             std::this_thread::sleep_for(25ms);
             continue;
