@@ -10,6 +10,11 @@ using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 
 int WgcCapturer::open(HWND hwnd, HMONITOR monitor)
 {
+    if (hw_device_ref_ == nullptr) {
+        LOG(ERROR) << "[     WGC] please set hardware device first.";
+        return -1;
+    }
+
     // parse capture item
     if (hwnd) {
         item_ = wgc::create_capture_item_for_window(hwnd);
@@ -24,7 +29,9 @@ int WgcCapturer::open(HWND hwnd, HMONITOR monitor)
     }
 
     // D3D11Device & ImmediateContext
-    winrt::com_ptr<::ID3D11Device> d3d11_device = wgc::create_d3d11device();
+    // winrt::com_ptr<::ID3D11Device> d3d11_device = wgc::create_d3d11device();
+    AVHWDeviceContext *device_ctx = reinterpret_cast<AVHWDeviceContext *>(hw_device_ref_->data);
+    ID3D11Device *d3d11_device    = reinterpret_cast<AVD3D11VADeviceContext *>(device_ctx->hwctx)->device;
     d3d11_device->GetImmediateContext(d3d11_context_.put());
 
     // If you're using C++/WinRT, then to move back and forth between IDirect3DDevice and IDXGIDevice, use
@@ -33,8 +40,9 @@ int WgcCapturer::open(HWND hwnd, HMONITOR monitor)
     // This represents an IDXGIDevice, and can be used to interop between Windows Runtime components that
     // need to exchange IDXGIDevice references.
     winrt::com_ptr<::IInspectable> inspectable{};
-    if (FAILED(::CreateDirect3D11DeviceFromDXGIDevice(d3d11_device.as<::IDXGIDevice>().get(),
-                                                      inspectable.put()))) {
+    winrt::com_ptr<IDXGIDevice> dxgi_device{};
+    d3d11_device->QueryInterface(winrt::guid_of<IDXGIDevice>(), dxgi_device.put_void());
+    if (FAILED(::CreateDirect3D11DeviceFromDXGIDevice(dxgi_device.get(), inspectable.put()))) {
         LOG(ERROR) << "[     WGC] CreateDirect3D11DeviceFromDXGIDevice failed.";
         return -1;
     }
