@@ -43,15 +43,12 @@ git clone https://code.videolan.org/videolan/x264.git
 
 ```bash
 cd x264
-CC=cl ./configure --prefix=/usr/local --enable-shared
+CC=cl ./configure --prefix=/usr/local --enable-static
 make -j 16
 make install
-
-# rename
-mv /usr/local/lib/libx264.dll.lib /usr/local/lib/libx264.lib
 ```
 
-## Compile FFmpeg
+## Compile FFmpeg with libx264
 
 ```bash
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
@@ -64,15 +61,102 @@ CC=cl ~/sources/FFmpeg/configure --prefix=../../ffmpeg_shared \
     --enable-asm \
     --enable-shared \
     --enable-gpl --enable-version3 \
-    --enable-libx264 \
+    --enable-libx264 
+
+
+make -j 16
+make install
+```
+
+## Crop FFmpeg
+
+| Format                               | Supported | Type                                     | Option                                                                              | Repository                                                                      |
+| ------------------------------------ | --------- | ---------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| H.264 / AVC                          | &#10004;  | Video                                    | --enable-libx264                                                                    | [libx264](https://code.videolan.org/videolan/x264.git)                          |
+| H.265 / HEVC                         | &#10004;  | Video                                    | --enable-libx265                                                                    | [libx265](https://bitbucket.org/multicoreware/x265_git.git)                     |
+| VP8 / VP9                            |           | Video                                    | --enable-libvpx                                                                     | [libvpx](https://chromium.googlesource.com/webm/libvpx)                         |
+| AV1                                  |           | Video                                    | --enable-libaom                                                                     | [libaom](https://aomedia.googlesource.com/aom)                                  |
+| MPEG-4 Part 2 / MPEG-4               |           | Video                                    | --enable-libxvid                                                                    | [libxvid](https://labs.xvid.com/source/)                                        |
+| Theora video compression             |           | Video                                    | --enable-libtheora                                                                  | [libtheora](https://www.theora.org/downloads/)                                  |
+| Video Multi-Method Assessment Fusion |           | Video / Filter                           | --enable-libvmaf                                                                    | [libvmaf](https://github.com/Netflix/vmaf.git)                                  |
+| VidStab                              |           | Video                                    | --enable-libvidstab                                                                 | [libvidstab](https://github.com/georgmartius/vid.stab.git)                      |
+| .mp4                                 | &#10004;  | Video / Muxer                            | --enable-muxer=mp4                                                                  | built-in                                                                        |
+| .mkv                                 | &#10004;  | Video / Muxer                            | --enable-muxer=matroska                                                             | built-in                                                                        |
+| .gif                                 | &#10004;  | Video / Muxer                            | --enable-muxer=gif                                                                  | built-in                                                                        |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| MP3                                  | &#10004;  | Audio                                    | --enable-libmp3lame                                                                 | [libmp3lame](https://lame.sourceforge.io/)                                      |
+| AAC                                  | &#10004;  | Audio / Encoder / Decoder                | --enable-encoder=aac <br> --enable-decoder=aac <br> --enable-libfdk-aac             | built-in <br> [libfdk-aac](https://git.code.sf.net/p/opencore-amr/fdk-aac)      |
+| Opus                                 | &#10004;  | Audio                                    | -–enable-libopus                                                                    | [libopus](https://github.com/xiph/opus.git)                                     |
+| Game Music Emu                       |           | Audio                                    | --enable-libgme                                                                     | [libgme](https://github.com/mcfiredrill/libgme)                                 |
+| GSM 06.10                            |           | Audio                                    | --enable-libgsm                                                                     | [libgsm](https://quut.com/gsm/)                                                 |
+| Adaptive Multi Rate (AMR)            |           | Audio                                    | --enable-libopencore-amrnb <br> --enable-libopencore-amrnb                          | [libopencore-amr](https://github.com/BelledonneCommunications/opencore-amr.git) |
+| OpenMPT                              |           | Audio                                    | --enable-libopenmpt                                                                 | [libopenmpt](https://lib.openmpt.org/libopenmpt/)                               |
+| RubberBand                           |           | Audio                                    | --enable-librubberband                                                              | [librubberband](https://github.com/breakfastquay/rubberband.git)                |
+| Vorbis                               |           | Audio                                    | --enable-libvorbis                                                                  | [libvorbis](https://gitlab.xiph.org/xiph/vorbis.git)                            |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| zimg                                 |           | Image                                    | --enable-libzimg                                                                    | [libzimg](https://github.com/sekrit-twc/zimg.git)                               |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| Freetype                             |           | Text                                     | --enable-libfreetype                                                                | [libfreetype](https://download.savannah.gnu.org/releases/freetype/)             |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| ASS / SSA                            | &#10004;  | Subtitle                                 | --enable-libass                                                                     | [libass](https://github.com/libass/libass.git)                                  |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| Unicode Bidirectional Algorithm      |           | Algorithm                                | --enable-libfribidi                                                                 | [libfribidi](https://github.com/fribidi/fribidi.git)                            |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| Secure Reliable Transport            |           | Protocol                                 | --enable-libsrt                                                                     | [libsrt](https://github.com/hwangsaeul/libsrt.git)                              |
+| SSH                                  |           | Protocol                                 | --enable-libssh                                                                     | [libssh](https://github.com/CanonicalLtd/libssh.git)                            |
+| ZeroMQ                               |           | Protocol                                 | --enable-libzmq                                                                     | [libzmq](https://github.com/zeromq/libzmq.git)                                  |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| AMF                                  |           | HWAccel / AMD        / Encoder /         |                                                                                     |                                                                                 |
+| NVENC / NVDEC / CUVID                | &#10004;  | HWAccel / NVIDIA     / Encoder / Decoder | --disable-nvenc [autodetect] <br> --disable-nvdec <br> --disable-cuvid [autodetect] |                                                                                 |
+| Direct3D 11                          | &#10004;  | HWAccel / Microsoft  /         / Decoder | --disable-d3d11va [autodetect]                                                      |                                                                                 |
+| Direct3D 9 / DXVA2                   |           | HWAccel / Microsoft  /         / Decoder | --disable-dxva2 [autodetect]                                                        |                                                                                 |
+| Intel MediaSDK                       |           | HWAccel / Intel      / Encoder / Decoder | --enable-libmfx                                                                     | [MediaSDK](https://github.com/Intel-Media-SDK/MediaSDK.git)                     |
+| oneVPL                               |           | HWAccel / Intel      / Encoder / Decoder | --enable-libvpl                                                                     | [oneVPL](https://github.com/oneapi-src/oneVPL.git)                              |
+| Vulkan                               |           | HWAccel              /         / Decoder | --disable-vulkan [autodetect]                                                       |                                                                                 |
+| Media Foundation                     |           |                                          | --enable-mediafoundation [autodetect]                                               |                                                                                 |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| dshow                                |           | Device                                   | --enable-indev=dshow                                                                |                                                                                 |
+| gdigrab                              |           | Device                                   | --enable-indev=gdigrab                                                              |                                                                                 |
+|                                      |           |                                          |                                                                                     |                                                                                 |
+| split                                |           | Video / Filter                           | --enable-filter=split                                                               | built-in                                                                        |
+| palettegen                           |           | GIF   / Filter                           | --enable-filter=palettegen                                                          | built-in                                                                        |
+| paletteuse                           |           | GIF   / Filter                           | --enable-filter=paletteuse                                                          | built-in                                                                        |
+| amix                                 |           | Audio / Filter                           | --enable-filter=amix                                                                | built-in                                                                        |
+| aresample                            |           | Audio / Filter                           | --enable-filter=aresample                                                           | built-in                                                                        |
+
+```bash
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+
+CC=cl ~/sources/FFmpeg/configure --prefix=../../ffmpeg_shared \
+    --target-os=win64 \
+    --toolchain=msvc \
+    --arch=x86_64 \
+    --enable-x86asm \
+    --enable-asm \
+    --enable-shared \
+    --enable-gpl --enable-version3 \
     --disable-doc \
-    --disable-htmlpages \
-    --disable-manpages \
-    --disable-podpages \
-    --disable-txtpages \
-    --disable-dxva2 \
-    --disable-indevs \
-    --enable-indev=dshow
+    --disable-programs \
+    --disable-schannel \
+    --disable-everything \
+    --enable-indev=dshow \
+    --enable-libx264 \
+    --enable-muxer=gif \
+    --enable-muxer=mp4 \
+    --enable-muxer=matroska \
+    --enable-encoder=gif \
+    --enable-encoder=libx264 \
+    --enable-encoder=aac \
+    --enable-filter=palettegen \
+    --enable-filter=paletteuse \
+    --enable-filter=vflip \
+    --enable-filter=split \
+    --enable-filter=scale \
+    --enable-filter=amix \
+    --enable-filter=aresample \
+    --enable-protocol=file \
+    --enable-d3d11va \
+    --extra-version="cropping_build-ffiirree"
 
 
 make -j 16
@@ -82,7 +166,8 @@ make install
 ### References
 
 1. [Compiling FFmpeg with X264 on Windows 10 using MSVC](https://www.roxlu.com/2019/062/compiling-ffmpeg-with-x264-on-windows-10-using-msvc)
-2. FFmpeg options
+2. [Using FFmpeg with NVIDIA GPU Hardware Acceleration](https://docs.nvidia.com/video-technologies/video-codec-sdk/11.1/ffmpeg-with-nvidia-gpu/index.html)
+3. FFmpeg options
 
 ```bash
 Usage: configure [options]
@@ -538,7 +623,7 @@ NOTE: Object files are built at the place where configure is launched.
 ```
 
 ```bash
-install prefix            ~/installed
+install prefix            ../../ffmpeg_shared
 source path               .
 C compiler                cl.exe
 C library                 msvcrt
@@ -880,5 +965,6 @@ dshow                   gdigrab                 lavfi                   vfwcap
 Enabled outdevs:
 
 License: GPL version 3 or later
+
 
 ```
